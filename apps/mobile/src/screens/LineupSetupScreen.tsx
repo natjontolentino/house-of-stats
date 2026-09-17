@@ -36,7 +36,14 @@ export function LineupSetupScreen({
       ]}
     >
       <Text style={styles.title}>Set starting lineups</Text>
-      <ScrollView horizontal contentContainerStyle={{ gap: 24 }}>
+      {/* style={{flex:1}} bounds this row's height to the space between the
+          title and the Start button; without it a ScrollView sizes itself to
+          its content instead of the available space, so nothing below ever
+          becomes scrollable — on a short landscape phone screen that left
+          most of the roster completely unreachable. contentContainerStyle's
+          flexGrow:1 then lets that bounded height reach each TeamPicker's own
+          vertical ScrollView. */}
+      <ScrollView horizontal style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, gap: 24 }}>
         <TeamPicker
           name={homeTeam.name}
           playerIds={bundle.rosterByTeam[game.home_team_id] ?? []}
@@ -81,24 +88,26 @@ function TeamPicker({
   onToggle: (id: string) => void;
 }) {
   return (
-    <View style={{ minWidth: 260 }}>
+    <View style={{ minWidth: 260, flex: 1 }}>
       <Text style={styles.teamName}>
         {name} ({selected.length}/5)
       </Text>
-      {playerIds.map((id) => {
-        const player = players[id] as { nickname: string } | undefined;
-        const isSelected = selected.includes(id);
-        return (
-          <Pressable
-            key={id}
-            style={[styles.playerRow, isSelected && styles.playerRowSelected]}
-            onPress={() => onToggle(id)}
-          >
-            <Text style={styles.jersey}>{jerseys[id]}</Text>
-            <Text style={styles.playerName}>{player?.nickname}</Text>
-          </Pressable>
-        );
-      })}
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator>
+        {playerIds.map((id) => {
+          const player = players[id] as { nickname: string } | undefined;
+          const isSelected = selected.includes(id);
+          return (
+            <Pressable
+              key={id}
+              style={[styles.playerRow, isSelected && styles.playerRowSelected]}
+              onPress={() => onToggle(id)}
+            >
+              <Text style={styles.jersey}>{jerseys[id]}</Text>
+              <Text style={styles.playerName}>{player?.nickname}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 }
