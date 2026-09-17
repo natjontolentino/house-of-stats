@@ -12,3 +12,6 @@ build/
 .turbo/
 ios/
 android/
+
+.vercel
+.env*

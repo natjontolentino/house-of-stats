@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { chromium } from "playwright";
 import { fetchGameBundle } from "../../../../../lib/gameData";
 import { renderScoresheetHtml } from "../../../../../lib/exportTemplate";
+import { launchExportBrowser } from "../../../../../lib/launchBrowser";
 import { computeLiveGameState } from "@courtstats/shared";
 
 export const runtime = "nodejs";
@@ -24,7 +24,7 @@ export async function GET(_req: Request, { params }: { params: { gameId: string 
 
   const html = renderScoresheetHtml(bundle, liveState);
 
-  const browser = await chromium.launch();
+  const browser = await launchExportBrowser();
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });
