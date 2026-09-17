@@ -27,7 +27,13 @@ function winningTeamId(liveState: LiveGameState, bundle: GameBundle): string | n
   return liveState.home.score > liveState.away.score ? bundle.game.home_team_id : bundle.game.away_team_id;
 }
 
+/** True once at least one real event has been recorded — before that, "player of the game" and leaderboards are meaningless. */
+function hasGameStarted(bundle: GameBundle): boolean {
+  return filterVoidedEvents(bundle.events).length > 0;
+}
+
 function playerOfGame(bundle: GameBundle, liveState: LiveGameState) {
+  if (!hasGameStarted(bundle)) return null;
   return selectPlayerOfGame(
     Object.values(liveState.players).map((p) => ({
       playerId: p.playerId,
@@ -155,18 +161,29 @@ export function renderScoresheetHtml(bundle: GameBundle, liveState: LiveGameStat
 
 /** Shareable JPEG graphic — spec 12.2. Sized for social media, readable at phone size. */
 export function renderGraphicHtml(bundle: GameBundle, liveState: LiveGameState): string {
-  const players = Object.values(liveState.players).sort((a, b) => b.efficiency - a.efficiency);
-  const top = players.slice(0, 3);
+  const started = hasGameStarted(bundle);
   const pog = playerOfGame(bundle, liveState);
 
-  const topBlocks = top
-    .map(
-      (p) => `<div style="text-align:center">
+  const statusLabel =
+    bundle.game.status === "finalized"
+      ? "Final"
+      : bundle.game.status === "in_progress"
+        ? `Live — Period ${liveState.currentPeriod}`
+        : "Scheduled";
+
+  // Leading performers are only meaningful once real stats exist.
+  const topBlocks = started
+    ? Object.values(liveState.players)
+        .sort((a, b) => b.efficiency - a.efficiency)
+        .slice(0, 3)
+        .map(
+          (p) => `<div style="text-align:center">
         <div style="font-size:22px;font-weight:700">${esc(playerName(bundle, p.playerId))}</div>
         <div style="font-size:16px;opacity:0.7">${p.points} PTS · ${p.reboundsTotal} REB · ${p.assists} AST</div>
       </div>`,
-    )
-    .join("");
+        )
+        .join("")
+    : "";
 
   const pogBlock = pog
     ? `<div style="margin-top:48px;text-align:center">
@@ -183,7 +200,7 @@ export function renderGraphicHtml(bundle: GameBundle, liveState: LiveGameState):
   </head>
   <body>
     <div style="width:1080px;height:1080px;background:linear-gradient(135deg,#1a1a2e,#16213e);color:white;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px;box-sizing:border-box">
-      <div style="font-size:28px;opacity:0.7;margin-bottom:24px">Final</div>
+      <div style="font-size:28px;opacity:0.7;margin-bottom:24px">${esc(statusLabel)}</div>
       <div style="display:flex;align-items:center;gap:40px">
         <div style="text-align:center">
           <div style="font-size:28px;opacity:0.8">${esc(bundle.awayTeam.short_name)}</div>
