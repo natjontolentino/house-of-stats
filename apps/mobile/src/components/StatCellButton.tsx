@@ -64,8 +64,13 @@ export function StatCellButton({
 }
 
 const styles = StyleSheet.create({
+  // Fix Round 2, A5: an explicit height (not vertical padding) so the row's
+  // actual height is a predictable 48px — Android's minimum touch target —
+  // rather than whatever a font's own line-height metrics happen to add up
+  // to. If on-device testing finds 48px error-prone to tap accurately,
+  // bump this to 50 and shave the difference off the prompt bar instead.
   cell: {
-    paddingVertical: 6,
+    height: 48,
     paddingHorizontal: 2,
     alignItems: "center",
     justifyContent: "center",

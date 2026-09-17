@@ -8,7 +8,10 @@ export type PromptState =
       teamId: string;
       benchPlayerId: string;
       benchPlayerName: string;
-      onCourtOptions: Array<{ playerId: string; name: string }>;
+      // Fix Round 2, B2: real rosters repeat first names across teams, so
+      // every player named in a prompt carries their jersey number too.
+      benchPlayerJersey: string;
+      onCourtOptions: Array<{ playerId: string; name: string; jersey: string }>;
       /** The stat cell the tracker originally tapped; recorded once the substitution resolves. */
       pendingCell: { key: string } | null;
     }
@@ -17,6 +20,7 @@ export type PromptState =
       teamId: string;
       playerId: string;
       playerName: string;
+      playerJersey: string;
       reason: "fouls" | "technicals";
-      benchOptions: Array<{ playerId: string; name: string }>;
+      benchOptions: Array<{ playerId: string; name: string; jersey: string }>;
     };

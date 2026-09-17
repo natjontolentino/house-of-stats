@@ -7,8 +7,8 @@ import type { CachedGameBundle } from "../db/localDb";
 import { useGameEngine } from "../state/useGameEngine";
 import { TopBar } from "../components/TopBar";
 import { TeamGridHeader, TeamGridRows } from "../components/TeamGrid";
-import { TeamFoulAndTimeoutBar } from "../components/TeamFoulAndTimeoutBar";
-import { PromptBar } from "../components/PromptBar";
+import { TeamFoulAndTimeoutBar, CompactTeamFoulAndTimeoutBar } from "../components/TeamFoulAndTimeoutBar";
+import { PromptBar, PromptOverlay } from "../components/PromptBar";
 import { LastActionsLine } from "../components/LastActionsLine";
 import { MinutesPeekPanel } from "../components/MinutesPeekPanel";
 import { ReviewScreen } from "./ReviewScreen";
@@ -80,78 +80,92 @@ export function TrackerScreen({
       {/* Fix B4: immersive while a game is open so a notification banner
           can't drop over the grid mid-possession; restored on other screens. */}
       <StatusBar hidden style="light" />
-      <TopBar bundle={bundle} engine={engine} />
+      <TopBar
+        bundle={bundle}
+        engine={engine}
+        isTablet={isTablet}
+        activeSide={activeSide}
+        onSelectSide={setActiveSide}
+      />
 
-      {isTablet ? (
-        <View style={styles.tabletGridArea}>
-          <View style={styles.gridsRow}>
-            <View style={styles.gridColumn}>
-              <TeamGridHeader teamId={game.home_team_id} engine={engine} />
-            </View>
-            <View style={styles.gridColumn}>
-              <TeamGridHeader teamId={game.away_team_id} engine={engine} />
-            </View>
-          </View>
-          {/* Fix A2: one shared ScrollView for both teams — they can never
-              reach different scroll offsets, and the headers above never
-              scroll at all. */}
-          <ScrollView style={{ flex: 1 }}>
+      {/* position:'relative' anchors PromptOverlay (Fix Round 2, B3) to the
+          bottom of just this area, so a tall prompt covers grid rows instead
+          of ever resizing this flex:1 region and starving the ScrollView. */}
+      <View style={{ flex: 1, position: "relative" }}>
+        {isTablet ? (
+          <View style={styles.tabletGridArea}>
             <View style={styles.gridsRow}>
               <View style={styles.gridColumn}>
-                <TeamGridRows bundle={bundle} teamId={game.home_team_id} engine={engine} pinOnCourtFirst={false} />
+                <TeamGridHeader teamId={game.home_team_id} engine={engine} />
               </View>
               <View style={styles.gridColumn}>
-                <TeamGridRows bundle={bundle} teamId={game.away_team_id} engine={engine} pinOnCourtFirst={false} />
+                <TeamGridHeader teamId={game.away_team_id} engine={engine} />
               </View>
             </View>
-          </ScrollView>
+            {/* Fix A2: one shared ScrollView for both teams — they can never
+                reach different scroll offsets, and the headers above never
+                scroll at all. */}
+            <ScrollView style={{ flex: 1 }}>
+              <View style={styles.gridsRow}>
+                <View style={styles.gridColumn}>
+                  <TeamGridRows bundle={bundle} teamId={game.home_team_id} engine={engine} pinOnCourtFirst={false} />
+                </View>
+                <View style={styles.gridColumn}>
+                  <TeamGridRows bundle={bundle} teamId={game.away_team_id} engine={engine} pinOnCourtFirst={false} />
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        ) : (
+          <View style={{ flex: 1 }}>
+            {/* Fix Round 2, A3: the separate toggle tab row is gone — tapping
+                a team's score in TopBar now switches the active side, which
+                reclaims a full row of phone height at no functional cost. */}
+            <TeamGridHeader teamId={activeSide === "home" ? game.home_team_id : game.away_team_id} engine={engine} />
+            <ScrollView style={{ flex: 1 }}>
+              <TeamGridRows
+                bundle={bundle}
+                teamId={activeSide === "home" ? game.home_team_id : game.away_team_id}
+                engine={engine}
+                pinOnCourtFirst
+              />
+            </ScrollView>
+          </View>
+        )}
+
+        <PromptOverlay engine={engine} />
+      </View>
+
+      {isTablet ? (
+        <View style={styles.foulsRow}>
+          <TeamFoulAndTimeoutBar
+            teamId={game.home_team_id}
+            teamName={teamShortLabel(homeTeam)}
+            engine={engine}
+            side="home"
+            align="left"
+            settings={bundle.settings}
+          />
+          <TeamFoulAndTimeoutBar
+            teamId={game.away_team_id}
+            teamName={teamShortLabel(awayTeam)}
+            engine={engine}
+            side="away"
+            align="right"
+            settings={bundle.settings}
+          />
         </View>
       ) : (
-        <View style={{ flex: 1 }}>
-          <View style={styles.toggleRow}>
-            <Pressable
-              style={[styles.toggleButton, activeSide === "home" && styles.toggleButtonActive]}
-              onPress={() => setActiveSide("home")}
-            >
-              <Text style={styles.toggleText}>{teamShortLabel(homeTeam)}</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.toggleButton, activeSide === "away" && styles.toggleButtonActive]}
-              onPress={() => setActiveSide("away")}
-            >
-              <Text style={styles.toggleText}>{teamShortLabel(awayTeam)}</Text>
-            </Pressable>
-          </View>
-          <TeamGridHeader teamId={activeSide === "home" ? game.home_team_id : game.away_team_id} engine={engine} />
-          <ScrollView style={{ flex: 1 }}>
-            <TeamGridRows
-              bundle={bundle}
-              teamId={activeSide === "home" ? game.home_team_id : game.away_team_id}
-              engine={engine}
-              pinOnCourtFirst
-            />
-          </ScrollView>
-        </View>
+        // Fix Round 2, A4: only the active team's fouls/timeouts on phone —
+        // the opponent's foul count already rides beside their score in
+        // TopBar, and their timeout boxes are reachable by switching teams.
+        <CompactTeamFoulAndTimeoutBar
+          teamId={activeSide === "home" ? game.home_team_id : game.away_team_id}
+          engine={engine}
+          side={activeSide}
+          settings={bundle.settings}
+        />
       )}
-
-      <View style={styles.foulsRow}>
-        <TeamFoulAndTimeoutBar
-          teamId={game.home_team_id}
-          teamName={teamShortLabel(homeTeam)}
-          engine={engine}
-          side="home"
-          align="left"
-          settings={bundle.settings}
-        />
-        <TeamFoulAndTimeoutBar
-          teamId={game.away_team_id}
-          teamName={teamShortLabel(awayTeam)}
-          engine={engine}
-          side="away"
-          align="right"
-          settings={bundle.settings}
-        />
-      </View>
 
       <PromptBar engine={engine} />
 
@@ -213,10 +227,6 @@ const styles = StyleSheet.create({
   tabletGridArea: { flex: 1 },
   gridsRow: { flexDirection: "row" },
   gridColumn: { flex: 1, minWidth: 0 },
-  toggleRow: { flexDirection: "row" },
-  toggleButton: { flex: 1, padding: 10, alignItems: "center", backgroundColor: "#eee" },
-  toggleButtonActive: { backgroundColor: "#1a1a2e" },
-  toggleText: { fontWeight: "700", color: "#333" },
   foulsRow: { flexDirection: "row", paddingHorizontal: 12, paddingVertical: 6, gap: 16 },
   bottomRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 8 },
   bottomButtons: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6 },

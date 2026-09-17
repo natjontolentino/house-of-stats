@@ -119,18 +119,23 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
         const player = liveState.players[playerId];
         const benchOptions = teamState.benchPlayerIds
           .filter((id) => !teamState.disqualifiedPlayerIds.includes(id))
-          .map((id) => ({ playerId: id, name: (bundle.players[id] as { nickname: string })?.nickname ?? "?" }));
+          .map((id) => ({
+            playerId: id,
+            name: (bundle.players[id] as { nickname: string })?.nickname ?? "?",
+            jersey: bundle.jerseyByPlayer[id] ?? "?",
+          }));
         setPrompt({
           kind: "disqualification",
           teamId,
           playerId,
           playerName: (bundle.players[playerId] as { nickname: string })?.nickname ?? "?",
+          playerJersey: bundle.jerseyByPlayer[playerId] ?? "?",
           reason: player?.fouledOut ? "fouls" : "technicals",
           benchOptions,
         });
       }
     }
-  }, [liveState, game.home_team_id, game.away_team_id, bundle.players]);
+  }, [liveState, game.home_team_id, game.away_team_id, bundle.players, bundle.jerseyByPlayer]);
 
   // --- tracker-mode local ticking ---
   useEffect(() => {
@@ -324,17 +329,19 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
       const onCourtOptions = teamState.onCourtPlayerIds.map((id) => ({
         playerId: id,
         name: (bundle.players[id] as { nickname: string })?.nickname ?? "?",
+        jersey: bundle.jerseyByPlayer[id] ?? "?",
       }));
       setPrompt({
         kind: "implicit_substitution",
         teamId,
         benchPlayerId: playerId,
         benchPlayerName: bench?.nickname ?? "?",
+        benchPlayerJersey: bundle.jerseyByPlayer[playerId] ?? "?",
         onCourtOptions,
         pendingCell: { key: cellKey },
       });
     },
-    [liveState, game.home_team_id, recordCellForPlayer, bundle.players],
+    [liveState, game.home_team_id, recordCellForPlayer, bundle.players, bundle.jerseyByPlayer],
   );
 
   /** Long-press: −1 on any row, including bench (spec 6.4, 6.5). */

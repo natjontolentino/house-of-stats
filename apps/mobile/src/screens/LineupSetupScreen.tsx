@@ -32,7 +32,13 @@ export function LineupSetupScreen({
     <View
       style={[
         styles.container,
-        { paddingBottom: 24 + insets.bottom, paddingLeft: 24 + insets.left, paddingRight: 24 + insets.right },
+        // Fix Round 2, B1: paddingTop was missing here too — see GameListScreen.
+        {
+          paddingTop: 24 + insets.top,
+          paddingBottom: 24 + insets.bottom,
+          paddingLeft: 24 + insets.left,
+          paddingRight: 24 + insets.right,
+        },
       ]}
     >
       <Text style={styles.title}>Set starting lineups</Text>

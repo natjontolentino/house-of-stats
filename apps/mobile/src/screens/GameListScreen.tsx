@@ -90,7 +90,14 @@ export function GameListScreen({
     <View
       style={[
         styles.container,
-        { paddingBottom: 24 + insets.bottom, paddingLeft: 24 + insets.left, paddingRight: 24 + insets.right },
+        // Fix Round 2, B1: paddingTop was missing here too — the base
+        // container's padding:24 alone doesn't reliably clear the status bar.
+        {
+          paddingTop: 24 + insets.top,
+          paddingBottom: 24 + insets.bottom,
+          paddingLeft: 24 + insets.left,
+          paddingRight: 24 + insets.right,
+        },
       ]}
     >
       <Text style={styles.title}>{showingToday ? "Today's games" : "Scheduled games"}</Text>

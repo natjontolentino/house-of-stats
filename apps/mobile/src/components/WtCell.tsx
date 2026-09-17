@@ -62,7 +62,9 @@ export function WtCell({
 }
 
 const styles = StyleSheet.create({
-  cell: { paddingVertical: 6, paddingHorizontal: 2, alignItems: "center", justifyContent: "center", borderRadius: 4 },
+  // Fix Round 2, A5: matches StatCellButton's fixed-height approach so every
+  // cell in a row agrees on the same 48px height regardless of font metrics.
+  cell: { height: 48, paddingHorizontal: 2, alignItems: "center", justifyContent: "center", borderRadius: 4 },
   warn: { backgroundColor: "#fde9c8" },
   tech: { backgroundColor: "#f7c7c7" },
   tech2: { backgroundColor: "#d0021b" },

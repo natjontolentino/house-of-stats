@@ -4,11 +4,15 @@ import type { GameEvent } from "@courtstats/shared";
 
 function describe(evt: GameEvent, bundle: CachedGameBundle): string {
   const player = evt.player_id ? (bundle.players[evt.player_id] as { nickname: string } | undefined)?.nickname : null;
+  const jersey = evt.player_id ? bundle.jerseyByPlayer[evt.player_id] : undefined;
   const game = bundle.game as { home_team_id: string };
   const homeTeam = bundle.homeTeam as { short_name: string };
   const awayTeam = bundle.awayTeam as { short_name: string };
   const teamShort = evt.team_id === game.home_team_id ? homeTeam.short_name : awayTeam.short_name;
-  const who = player ?? `${teamShort} team`;
+  // Fix Round 2, B2: real rosters repeat first names across teams, so every
+  // player-attributed entry names the team and jersey, not just the
+  // nickname — "RDG #20 Julian technical", not "Julian technical".
+  const who = player ? `${teamShort} #${jersey} ${player}` : `${teamShort} team`;
 
   switch (evt.event_type) {
     case "shot_made":
@@ -39,7 +43,9 @@ function describe(evt: GameEvent, bundle: CachedGameBundle): string {
       const { player_in, player_out } = evt.payload as { player_in: string; player_out: string };
       const nameIn = (bundle.players[player_in] as { nickname: string })?.nickname ?? "?";
       const nameOut = (bundle.players[player_out] as { nickname: string })?.nickname ?? "?";
-      return `${teamShort}: ${nameIn} in / ${nameOut} out`;
+      const jerseyIn = bundle.jerseyByPlayer[player_in] ?? "?";
+      const jerseyOut = bundle.jerseyByPlayer[player_out] ?? "?";
+      return `${teamShort}: #${jerseyIn} ${nameIn} in / #${jerseyOut} ${nameOut} out`;
     }
     case "timeout":
       return `${teamShort} timeout`;
@@ -76,6 +82,7 @@ export function LastActionsLine({ bundle, events }: { bundle: CachedGameBundle; 
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: 12, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: "#f0f0f3" },
-  item: { fontSize: 11, color: "#444", maxWidth: 160 },
+  // Widened from 160: the team+jersey prefix (Fix Round 2, B2) adds length.
+  item: { fontSize: 11, color: "#444", maxWidth: 200 },
   muted: { fontSize: 11, color: "#999" },
 });

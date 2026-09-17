@@ -180,7 +180,16 @@ export function ReviewScreen({
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={{ padding: 20, paddingBottom: 20 + insets.bottom, paddingLeft: 20 + insets.left, paddingRight: 20 + insets.right }}
+      contentContainerStyle={{
+        padding: 20,
+        // Fix Round 2, B1: only bottom/left/right were inset last round —
+        // the review screen isn't immersive like the tracker, so its own
+        // status bar was still drawing over the title/first player row.
+        paddingTop: 20 + insets.top,
+        paddingBottom: 20 + insets.bottom,
+        paddingLeft: 20 + insets.left,
+        paddingRight: 20 + insets.right,
+      }}
     >
       <Text style={styles.title}>Review — {awayTeam.name} @ {homeTeam.name}</Text>
       <Text style={styles.finalScore}>

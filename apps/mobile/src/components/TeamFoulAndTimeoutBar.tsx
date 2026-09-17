@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import type { GameEngine } from "../state/useGameEngine";
-import { regulationHalfBoundaryPeriod, type LiveGameState, type LeagueSettings } from "@courtstats/shared";
+import type { LiveGameState, LeagueSettings } from "@courtstats/shared";
 import { gridFont } from "../state/gridTheme";
 
 /**
@@ -9,21 +9,7 @@ import { gridFont } from "../state/gridTheme";
  * table. Caption changes by state, colours match the existing (correct)
  * amber-at-4 / red-at-5 logic.
  */
-function FoulBox({
-  period,
-  count,
-  status,
-  debugBoundary,
-}: {
-  period: number;
-  count: number;
-  status: LiveGameState["home"]["penaltyStatus"];
-  /** TEMPORARY diagnostic (remove once the locked-second-half-boxes report
-      is resolved): shows what this device actually computes as the
-      regulation half boundary, so a screen recording tells us directly
-      whether the runtime settings differ from what we expect. */
-  debugBoundary: number;
-}) {
+function FoulBox({ period, count, status }: { period: number; count: number; status: LiveGameState["home"]["penaltyStatus"] }) {
   const caption = status === "red" ? "PENALTY" : status === "amber" ? "Next = FTs" : "Team fouls";
   const color = status === "red" ? "#d0021b" : status === "amber" ? "#b8790a" : "#444";
   const borderColor = status === "red" ? "#d0021b" : status === "amber" ? "#f0a93a" : "#ccc";
@@ -31,9 +17,7 @@ function FoulBox({
 
   return (
     <View style={[foulBoxStyles.box, { borderColor, backgroundColor }]}>
-      <Text style={foulBoxStyles.period}>
-        Q{period} (hb{debugBoundary})
-      </Text>
+      <Text style={foulBoxStyles.period}>Q{period}</Text>
       <Text style={[foulBoxStyles.count, { color, fontFamily: gridFont(true) }]}>{count}</Text>
       <Text style={[foulBoxStyles.caption, { color }]}>{caption}</Text>
     </View>
@@ -144,12 +128,7 @@ export function TeamFoulAndTimeoutBar({
 
   return (
     <View style={[styles.container, align === "right" && styles.containerReverse]}>
-      <FoulBox
-        period={liveState.currentPeriod}
-        count={teamState.teamFoulCount}
-        status={teamState.penaltyStatus}
-        debugBoundary={regulationHalfBoundaryPeriod(settings)}
-      />
+      <FoulBox period={liveState.currentPeriod} count={teamState.teamFoulCount} status={teamState.penaltyStatus} />
 
       <View style={styles.timeoutBlock}>
         <Text style={[styles.teamLabel, align === "right" && { textAlign: "right" }]} numberOfLines={1}>
@@ -190,4 +169,66 @@ const styles = StyleSheet.create({
   timeoutRowRight: { justifyContent: "flex-end" },
   timeoutSlot: { flexDirection: "row", alignItems: "center" },
   divider: { width: 1, height: 18, backgroundColor: "#ccc", marginRight: 6 },
+});
+
+/**
+ * Fix Round 2, A4 (phone only): the full two-panel bar above budgets
+ * ~125px because it shows both teams' bordered foul boxes and full-width
+ * timeout rows side by side. On phone only the active team's grid is even
+ * visible, so this shows just that team in a single ~50px row instead —
+ * the opponent's foul count rides along in the top bar (TopBar.tsx) and
+ * their timeout boxes are reachable by switching teams. Tablet never
+ * renders this; it keeps the full two-panel TeamFoulAndTimeoutBar above.
+ */
+export function CompactTeamFoulAndTimeoutBar({
+  teamId,
+  engine,
+  side,
+  settings,
+}: {
+  teamId: string;
+  engine: GameEngine;
+  side: "home" | "away";
+  settings: LeagueSettings;
+}) {
+  const liveState = engine.liveState!;
+  const teamState: LiveGameState["home"] = liveState[side];
+  const firstHalfCount = settings.timeouts_first_half;
+  const status = teamState.penaltyStatus;
+  const color = status === "red" ? "#d0021b" : status === "amber" ? "#b8790a" : "#444";
+  const caption = status === "red" ? "PENALTY" : status === "amber" ? "Next = FTs" : "Team fouls";
+
+  return (
+    <View style={compactStyles.row}>
+      <Text style={[compactStyles.foulText, { color, fontFamily: gridFont(true) }]}>
+        Q{liveState.currentPeriod} · {teamState.teamFoulCount} {caption}
+      </Text>
+      <View style={compactStyles.timeoutRow}>
+        {teamState.timeoutBoxes.map((box, i) => (
+          <View key={box.slot_index} style={styles.timeoutSlot}>
+            {i === firstHalfCount && <View style={styles.divider} />}
+            <TimeoutBox
+              slotIndex={box.slot_index}
+              status={box.status}
+              onUse={() => engine.useTeamTimeout(teamId, box.slot_index)}
+              onUndo={() => engine.undoTimeout(teamId, box.slot_index)}
+            />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const compactStyles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 12,
+  },
+  foulText: { fontSize: 13, fontWeight: "700" },
+  timeoutRow: { flexDirection: "row", alignItems: "center", gap: 4 },
 });

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useKeepAwake } from "expo-keep-awake";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { msToMinutesDisplay } from "@courtstats/shared";
 import { supabase } from "../sync/supabaseClient";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -22,6 +23,7 @@ export function CompanionClockScreen({
   onClose: () => void;
 }) {
   useKeepAwake();
+  const insets = useSafeAreaInsets();
   const [clockMs, setClockMs] = useState(periodLengthMs);
   const [running, setRunning] = useState(false);
   // Created once inside the mount-only effect below, not via useRef's eager
@@ -63,7 +65,10 @@ export function CompanionClockScreen({
       <Pressable style={styles.resetButton} onPress={() => setClockMs(periodLengthMs)}>
         <Text style={styles.resetButtonText}>Reset to {msToMinutesDisplay(periodLengthMs)}</Text>
       </Pressable>
-      <Pressable style={styles.closeButton} onPress={onClose}>
+      <Pressable
+        style={[styles.closeButton, { top: 40 + insets.top, right: 24 + insets.right }]}
+        onPress={onClose}
+      >
         <Text style={styles.closeButtonText}>Close</Text>
       </Pressable>
     </View>

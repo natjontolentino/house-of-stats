@@ -358,10 +358,12 @@ const styles = StyleSheet.create({
   headerCell: { textAlign: "center", fontSize: 10, fontWeight: "700", color: "#666", textTransform: "uppercase" },
   headerSubCell: { textAlign: "center", fontSize: 11, fontWeight: "700", color: "#666" },
   headerHighlight: { color: "#b8790a" },
+  // Fix Round 2, A5: no vertical padding here — StatCellButton/WtCell's own
+  // fixed 48px cell height is what determines the row's height now, so it
+  // stays a predictable value instead of compounding with font metrics.
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 3,
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
