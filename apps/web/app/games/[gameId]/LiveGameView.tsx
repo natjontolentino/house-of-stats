@@ -95,7 +95,7 @@ export function LiveGameView({ bundle }: { bundle: GameBundle }) {
       : null;
 
   return (
-    <main style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
+    <main className="page">
       <ScoreHeader
         bundle={bundle}
         liveState={liveState}
@@ -109,30 +109,37 @@ export function LiveGameView({ bundle }: { bundle: GameBundle }) {
       <TeamFoulsAndTimeouts bundle={bundle} liveState={liveState} />
 
       {playerOfGame && (
-        <p style={{ marginTop: 16, fontWeight: 600 }}>
-          Player of the game:{" "}
-          {(() => {
-            const p = bundle.players[playerOfGame.playerId];
-            return p ? displayPlayerName(p, bundle.settings) : null;
-          })()}
-          {playerOfGame.isOverride ? " (organizer selection)" : ""}
-        </p>
+        <div
+          className="card"
+          style={{ marginTop: 14, padding: "12px 18px", display: "flex", alignItems: "baseline", gap: 8 }}
+        >
+          <span style={{ fontSize: 12, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 700 }}>
+            Player of the game
+          </span>
+          <span style={{ fontWeight: 700 }}>
+            {(() => {
+              const p = bundle.players[playerOfGame.playerId];
+              return p ? displayPlayerName(p, bundle.settings) : null;
+            })()}
+            {playerOfGame.isOverride ? " (organizer selection)" : ""}
+          </span>
+        </div>
       )}
 
       <ExportButtons gameId={bundle.game.id} />
 
-      <section style={{ marginTop: 24 }}>
-        <h2 style={{ fontSize: 16 }}>{bundle.homeTeam.name}</h2>
+      <section style={{ marginTop: 28 }}>
+        <h2 className="section-title">{bundle.homeTeam.name}</h2>
         <BoxScoreTable bundle={bundle} teamId={bundle.game.home_team_id} liveState={liveState} />
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2 style={{ fontSize: 16 }}>{bundle.awayTeam.name}</h2>
+        <h2 className="section-title">{bundle.awayTeam.name}</h2>
         <BoxScoreTable bundle={bundle} teamId={bundle.game.away_team_id} liveState={liveState} />
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2 style={{ fontSize: 16 }}>Play-by-play</h2>
+        <h2 className="section-title">Play-by-play</h2>
         <PlayByPlay bundle={bundle} events={events} />
       </section>
     </main>

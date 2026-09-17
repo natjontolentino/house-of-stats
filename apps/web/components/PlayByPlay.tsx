@@ -71,17 +71,29 @@ export function PlayByPlay({ bundle, events }: { bundle: GameBundle; events: Gam
     .slice(0, 100);
 
   return (
-    <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+    <ul className="card" style={{ listStyle: "none", margin: 0, padding: "4px 16px" }}>
       {visible.map((evt) => (
         <li
           key={evt.client_uuid}
-          style={{ padding: "6px 0", borderBottom: "1px solid var(--border)", fontSize: 13, display: "flex", gap: 8 }}
+          style={{ padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 13.5, display: "flex", gap: 10 }}
         >
-          <span style={{ color: "var(--muted)", minWidth: 28 }}>Q{evt.period}</span>
+          <span
+            style={{
+              color: "var(--muted)",
+              minWidth: 26,
+              fontSize: 11,
+              fontWeight: 700,
+              paddingTop: 1,
+            }}
+          >
+            Q{evt.period}
+          </span>
           <span>{describe(evt, bundle)}</span>
         </li>
       ))}
-      {visible.length === 0 && <li style={{ color: "var(--muted)" }}>No plays recorded yet.</li>}
+      {visible.length === 0 && (
+        <li style={{ color: "var(--muted)", padding: "14px 0", fontSize: 13.5 }}>No plays recorded yet.</li>
+      )}
     </ul>
   );
 }

@@ -15,7 +15,7 @@ export function TeamFoulsAndTimeouts({
   liveState: LiveGameState;
 }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, gap: 16 }}>
+    <div className="card" style={{ display: "flex", justifyContent: "space-between", marginTop: 14, gap: 16, padding: "14px 18px" }}>
       <TeamPanel name={bundle.awayTeam.short_name} team={liveState.away} />
       <TeamPanel name={bundle.homeTeam.short_name} team={liveState.home} align="right" />
     </div>
@@ -31,28 +31,36 @@ function TeamPanel({
   team: LiveGameState["home"];
   align?: "left" | "right";
 }) {
+  const color = statusColor(team.penaltyStatus);
   return (
     <div style={{ flex: 1, textAlign: align }}>
-      <div style={{ fontSize: 12, color: statusColor(team.penaltyStatus), fontWeight: 600 }}>
+      <div style={{ fontSize: 12.5, color, fontWeight: 700 }}>
         {name} fouls: {team.teamFoulCount}
         {team.penaltyStatus === "red" ? " — Penalty" : team.penaltyStatus === "amber" ? " — Bonus next foul" : ""}
       </div>
-      <div style={{ display: "flex", gap: 4, marginTop: 4, justifyContent: align === "right" ? "flex-end" : "flex-start" }}>
+      <div style={{ display: "flex", gap: 5, marginTop: 6, justifyContent: align === "right" ? "flex-end" : "flex-start" }}>
         {team.timeoutBoxes.map((box) => (
           <span
             key={box.slot_index}
             title={box.status}
             style={{
-              width: 16,
-              height: 16,
-              borderRadius: 3,
+              width: 18,
+              height: 18,
+              borderRadius: 4,
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: 10,
-              border: box.status === "locked" ? "1px dashed var(--border)" : "1px solid var(--border)",
-              background: box.status === "used" ? "var(--muted)" : "transparent",
-              color: box.status === "used" ? "white" : "var(--muted)",
+              fontWeight: 700,
+              border:
+                box.status === "locked"
+                  ? "1px dashed var(--border-strong)"
+                  : box.status === "used" || box.status === "expired"
+                    ? `1.5px solid ${color === "var(--muted)" ? "var(--red)" : color}`
+                    : "1.5px solid var(--border-strong)",
+              background: box.status === "used" ? "var(--red-bg)" : box.status === "locked" ? "var(--bg)" : "transparent",
+              color: box.status === "used" || box.status === "expired" ? "var(--red)" : "var(--muted-light)",
+              opacity: box.status === "locked" ? 0.6 : 1,
             }}
           >
             {box.status === "used" ? "✓" : box.status === "expired" ? "✕" : ""}

@@ -1,26 +1,166 @@
 :root {
   color-scheme: light;
-  --bg: #f7f7f8;
+
+  /* Brand — the same navy used in the tracker app's top bar and the share
+     graphic export, so the product reads as one system across mobile,
+     web, and exports. */
+  --navy: #1a1a2e;
+  --navy-light: #2a2a45;
+  --accent: #ff6b35;
+  --accent-dark: #e0501e;
+
+  --bg: #f4f4f6;
   --panel: #ffffff;
-  --border: #e2e2e6;
-  --text: #17171a;
-  --muted: #6b6b74;
-  --accent: #d4380d;
-  --amber: #f5a623;
+  --border: #e5e5ea;
+  --border-strong: #d4d4dc;
+  --text: #16161a;
+  --muted: #6b6b76;
+  --muted-light: #9a9aa4;
+
+  --amber: #b8790a;
+  --amber-bg: #fdf1dc;
   --red: #d0021b;
+  --red-bg: #fbe4e6;
   --green: #1a8f4c;
+  --green-bg: #e3f6ea;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow-sm: 0 1px 2px rgba(16, 16, 24, 0.04), 0 1px 1px rgba(16, 16, 24, 0.03);
+  --shadow-md: 0 4px 16px rgba(16, 16, 24, 0.06), 0 1px 2px rgba(16, 16, 24, 0.04);
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* --- Site header --- */
+
+.site-header {
+  background: var(--navy);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.site-header__inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 14px 16px;
+}
+
+.site-header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-weight: 800;
+  font-size: 17px;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.site-header__mark {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* --- Shared building blocks --- */
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 10px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.badge--live {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.badge--live::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--green);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.badge--scheduled {
+  background: var(--bg);
+  color: var(--muted);
+}
+
+.badge--final {
+  background: #ececf0;
+  color: var(--text);
+}
+
+.badge--stale {
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* --- Tables --- */
 
 table {
   border-collapse: collapse;
@@ -29,26 +169,38 @@ table {
 
 th,
 td {
-  padding: 6px 10px;
+  padding: 9px 10px;
   text-align: center;
   border-bottom: 1px solid var(--border);
-  font-size: 14px;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 th {
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  font-size: 11px;
+  font-size: 10.5px;
   letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border-strong);
 }
 
 td:first-child,
 th:first-child {
   text-align: left;
+  padding-left: 4px;
 }
 
-a {
-  color: inherit;
+td:nth-child(2),
+th:nth-child(2) {
+  text-align: left;
+}
+
+tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+tbody tr:hover {
+  background: rgba(0, 0, 0, 0.03);
 }

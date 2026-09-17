@@ -20,7 +20,7 @@ export function BoxScoreTable({
   const totals = computeTeamTotalsFromPlayers(teamId, liveState.players, teamLine);
 
   return (
-    <div style={{ overflowX: "auto" }}>
+    <div className="card" style={{ overflowX: "auto", padding: "4px 4px" }}>
       <table>
         <thead>
           <tr>
@@ -47,7 +47,7 @@ export function BoxScoreTable({
             const player = bundle.players[playerId];
             if (!p || !player) return null;
             return (
-              <tr key={playerId} style={{ opacity: p.onCourt ? 1 : 0.65 }}>
+              <tr key={playerId} style={{ opacity: p.onCourt ? 1 : 0.55 }}>
                 <td>{bundle.jerseyByPlayer[playerId]}</td>
                 <td>{displayPlayerName(player, bundle.settings)}</td>
                 <td>{p.points}</td>
@@ -72,7 +72,7 @@ export function BoxScoreTable({
               </tr>
             );
           })}
-          <tr style={{ fontStyle: "italic" }}>
+          <tr style={{ fontStyle: "italic", background: "rgba(0,0,0,0.025)" }}>
             <td></td>
             <td>Team</td>
             <td></td>
@@ -91,7 +91,7 @@ export function BoxScoreTable({
             <td></td>
             <td></td>
           </tr>
-          <tr style={{ fontWeight: 700 }}>
+          <tr style={{ fontWeight: 700, background: "rgba(0,0,0,0.04)" }}>
             <td></td>
             <td>Totals</td>
             <td>{totals.points}</td>

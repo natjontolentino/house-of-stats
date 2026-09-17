@@ -8,29 +8,31 @@ export function ScoreByPeriod({ bundle, events }: { bundle: GameBundle; events: 
   if (periods.length === 0) return null;
 
   return (
-    <table style={{ marginTop: 16, maxWidth: 420 }}>
-      <thead>
-        <tr>
-          <th></th>
-          {periods.map((p) => (
-            <th key={p.period}>Q{p.period}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style={{ textAlign: "left" }}>{bundle.awayTeam.short_name}</td>
-          {periods.map((p) => (
-            <td key={p.period}>{p.awayPoints}</td>
-          ))}
-        </tr>
-        <tr>
-          <td style={{ textAlign: "left" }}>{bundle.homeTeam.short_name}</td>
-          {periods.map((p) => (
-            <td key={p.period}>{p.homePoints}</td>
-          ))}
-        </tr>
-      </tbody>
-    </table>
+    <div className="card" style={{ marginTop: 14, padding: "4px 18px", maxWidth: 420 }}>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            {periods.map((p) => (
+              <th key={p.period}>Q{p.period}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style={{ fontWeight: 600 }}>{bundle.awayTeam.short_name}</td>
+            {periods.map((p) => (
+              <td key={p.period}>{p.awayPoints}</td>
+            ))}
+          </tr>
+          <tr>
+            <td style={{ fontWeight: 600 }}>{bundle.homeTeam.short_name}</td>
+            {periods.map((p) => (
+              <td key={p.period}>{p.homePoints}</td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }

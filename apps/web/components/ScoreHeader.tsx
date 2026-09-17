@@ -19,6 +19,7 @@ export function ScoreHeader({
   lastEventAt: Date | null;
 }) {
   const isFinal = gameStatus === "finalized";
+  const hasStarted = lastEventAt !== null;
 
   return (
     <header
@@ -26,27 +27,28 @@ export function ScoreHeader({
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        background: "var(--panel)",
-        border: "1px solid var(--border)",
-        borderRadius: 8,
-        padding: "16px 20px",
+        gap: 12,
+        background: "linear-gradient(155deg, var(--navy), var(--navy-light))",
+        borderRadius: "var(--radius)",
+        padding: "22px 20px",
+        boxShadow: "var(--shadow-md)",
       }}
     >
       <TeamScore name={bundle.awayTeam.name} short={bundle.awayTeam.short_name} score={liveState.away.score} />
 
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 12, color: "var(--muted)", textTransform: "uppercase" }}>
-          {isFinal ? "Final" : `Period ${liveState.currentPeriod}`}
+      <div style={{ textAlign: "center", minWidth: 92 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}>
+          {isFinal ? "Final" : hasStarted ? `Period ${liveState.currentPeriod}` : "Upcoming"}
         </div>
-        <div style={{ marginTop: 4, fontSize: 13 }}>
+        <div style={{ marginTop: 6, fontSize: 12.5 }}>
           {isFinal ? (
-            <span style={{ color: "var(--muted)" }}>Game complete</span>
+            <span style={{ color: "rgba(255,255,255,0.5)" }}>Game complete</span>
+          ) : !hasStarted ? (
+            <span style={{ color: "rgba(255,255,255,0.5)" }}>Not started</span>
           ) : isStale ? (
-            <span style={{ color: "var(--amber)" }}>
-              {lastEventAt ? `Last updated ${minutesAgo(lastEventAt)} min ago` : "Not started"}
-            </span>
+            <span className="badge badge--stale">{`Updated ${minutesAgo(lastEventAt)}m ago`}</span>
           ) : (
-            <span style={{ color: "var(--green)" }}>● Live</span>
+            <span className="badge badge--live">Live</span>
           )}
         </div>
       </div>
@@ -58,11 +60,13 @@ export function ScoreHeader({
 
 function TeamScore({ name, short, score }: { name: string; short: string; score: number }) {
   return (
-    <div style={{ textAlign: "center", minWidth: 100 }}>
-      <div style={{ fontSize: 13, color: "var(--muted)" }} title={name}>
+    <div style={{ textAlign: "center", minWidth: 92 }}>
+      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", fontWeight: 600 }} title={name}>
         {short}
       </div>
-      <div style={{ fontSize: 32, fontVariantNumeric: "tabular-nums", fontWeight: 700 }}>{score}</div>
+      <div style={{ marginTop: 2, fontSize: 40, fontVariantNumeric: "tabular-nums", fontWeight: 800, color: "white", lineHeight: 1 }}>
+        {score}
+      </div>
     </div>
   );
 }

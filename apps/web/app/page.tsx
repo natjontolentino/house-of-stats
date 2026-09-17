@@ -3,6 +3,19 @@ import { createSupabaseClient } from "../lib/supabaseClient";
 
 export const dynamic = "force-dynamic";
 
+function formatWhen(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) +
+    " · " +
+    d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+function StatusBadge({ status }: { status: string }) {
+  if (status === "in_progress") return <span className="badge badge--live">Live</span>;
+  if (status === "finalized") return <span className="badge badge--final">Final</span>;
+  return <span className="badge badge--scheduled">Scheduled</span>;
+}
+
 export default async function HomePage() {
   const supabase = createSupabaseClient();
   const { data: games } = await supabase
@@ -17,11 +30,12 @@ export default async function HomePage() {
   const teamById = new Map((teams ?? []).map((t) => [t.id, t]));
 
   return (
-    <main style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
-      <h1 style={{ fontSize: 22, marginBottom: 4 }}>Sunset Rec League</h1>
-      <p style={{ color: "var(--muted)", marginTop: 0 }}>2026 Winter Season — schedule</p>
+    <main className="page">
+      <h1 style={{ fontSize: 24, margin: "4px 0 2px" }}>Sunset Rec League</h1>
+      <p style={{ color: "var(--muted)", margin: "0 0 20px", fontSize: 14 }}>2026 Winter Season</p>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
+      <h2 className="section-title">Schedule</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {(games ?? []).map((g) => {
           const home = teamById.get(g.home_team_id);
           const away = teamById.get(g.away_team_id);
@@ -29,27 +43,35 @@ export default async function HomePage() {
             <Link
               key={g.id}
               href={`/games/${g.id}`}
+              className="card"
               style={{
                 display: "flex",
+                alignItems: "center",
                 justifyContent: "space-between",
-                padding: "12px 16px",
-                background: "var(--panel)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
+                gap: 12,
+                padding: "14px 16px",
                 textDecoration: "none",
+                color: "var(--text)",
+                transition: "box-shadow 0.15s ease, transform 0.15s ease",
               }}
             >
-              <span>
-                {away?.short_name ?? "?"} @ {home?.short_name ?? "?"}
-              </span>
-              <span style={{ color: "var(--muted)" }}>
-                {new Date(g.scheduled_at).toLocaleString()} · {g.court_label} ·{" "}
-                {g.status}
-              </span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>
+                  {away?.short_name ?? "?"} @ {home?.short_name ?? "?"}
+                </div>
+                <div style={{ color: "var(--muted)", fontSize: 12.5, marginTop: 2 }}>
+                  {formatWhen(g.scheduled_at)} · {g.court_label}
+                </div>
+              </div>
+              <StatusBadge status={g.status} />
             </Link>
           );
         })}
-        {(games ?? []).length === 0 && <p>No games seeded yet.</p>}
+        {(games ?? []).length === 0 && (
+          <p className="card" style={{ padding: 16, color: "var(--muted)" }}>
+            No games scheduled yet.
+          </p>
+        )}
       </div>
     </main>
   );

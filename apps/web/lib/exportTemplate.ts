@@ -27,13 +27,21 @@ function winningTeamId(liveState: LiveGameState, bundle: GameBundle): string | n
   return liveState.home.score > liveState.away.score ? bundle.game.home_team_id : bundle.game.away_team_id;
 }
 
-/** True once at least one real event has been recorded — before that, "player of the game" and leaderboards are meaningless. */
+/** True once at least one real event has been recorded — before that, showing "Final"/a score is meaningless. */
 function hasGameStarted(bundle: GameBundle): boolean {
   return filterVoidedEvents(bundle.events).length > 0;
 }
 
+/**
+ * Player of the game is only meaningful once the game is actually decided —
+ * not just started. A still-live game's leader can (and often does) change
+ * by the final buzzer, and "restrict to the winning team" (spec 9.1) has no
+ * winner to restrict to yet. Confirmed via testing: the JPEG export was
+ * showing a "Player of the game" mid-Period-1, which the live website page
+ * already correctly avoids (it gates on gameStatus === "finalized").
+ */
 function playerOfGame(bundle: GameBundle, liveState: LiveGameState) {
-  if (!hasGameStarted(bundle)) return null;
+  if (bundle.game.status !== "finalized") return null;
   return selectPlayerOfGame(
     Object.values(liveState.players).map((p) => ({
       playerId: p.playerId,
