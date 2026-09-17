@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import type { GameEngine } from "../state/useGameEngine";
-import type { LiveGameState } from "@courtstats/shared";
+import { regulationHalfBoundaryPeriod, type LiveGameState, type LeagueSettings } from "@courtstats/shared";
 import { gridFont } from "../state/gridTheme";
 
 /**
@@ -9,7 +9,21 @@ import { gridFont } from "../state/gridTheme";
  * table. Caption changes by state, colours match the existing (correct)
  * amber-at-4 / red-at-5 logic.
  */
-function FoulBox({ period, count, status }: { period: number; count: number; status: LiveGameState["home"]["penaltyStatus"] }) {
+function FoulBox({
+  period,
+  count,
+  status,
+  debugBoundary,
+}: {
+  period: number;
+  count: number;
+  status: LiveGameState["home"]["penaltyStatus"];
+  /** TEMPORARY diagnostic (remove once the locked-second-half-boxes report
+      is resolved): shows what this device actually computes as the
+      regulation half boundary, so a screen recording tells us directly
+      whether the runtime settings differ from what we expect. */
+  debugBoundary: number;
+}) {
   const caption = status === "red" ? "PENALTY" : status === "amber" ? "Next = FTs" : "Team fouls";
   const color = status === "red" ? "#d0021b" : status === "amber" ? "#b8790a" : "#444";
   const borderColor = status === "red" ? "#d0021b" : status === "amber" ? "#f0a93a" : "#ccc";
@@ -17,7 +31,9 @@ function FoulBox({ period, count, status }: { period: number; count: number; sta
 
   return (
     <View style={[foulBoxStyles.box, { borderColor, backgroundColor }]}>
-      <Text style={foulBoxStyles.period}>Q{period}</Text>
+      <Text style={foulBoxStyles.period}>
+        Q{period} (hb{debugBoundary})
+      </Text>
       <Text style={[foulBoxStyles.count, { color, fontFamily: gridFont(true) }]}>{count}</Text>
       <Text style={[foulBoxStyles.caption, { color }]}>{caption}</Text>
     </View>
@@ -81,6 +97,13 @@ function TimeoutBox({
   );
 }
 
+// Every state below fully redeclares borderStyle and opacity, even where
+// they match the box default (solid/1) — Android's border drawable doesn't
+// reliably reset borderStyle/opacity when a later style update simply omits
+// them, so a box could keep looking dashed/dimmed after actually
+// transitioning out of "locked" (confirmed on-device: a used box showed a
+// correct checkmark on top of a leftover dashed border, proving the status
+// value itself was right and only the style residue was wrong).
 const timeoutStyles = StyleSheet.create({
   box: {
     width: 24,
@@ -90,8 +113,8 @@ const timeoutStyles = StyleSheet.create({
     justifyContent: "center",
     overflow: "hidden",
   },
-  available: { backgroundColor: "#fafafa", borderWidth: 2, borderColor: "#999" },
-  spent: { backgroundColor: "#fbe4e6", borderWidth: 2, borderColor: "#d0021b" },
+  available: { backgroundColor: "#fafafa", borderWidth: 2, borderColor: "#999", borderStyle: "solid", opacity: 1 },
+  spent: { backgroundColor: "#fbe4e6", borderWidth: 2, borderColor: "#d0021b", borderStyle: "solid", opacity: 1 },
   locked: { backgroundColor: "#eee", borderWidth: 1, borderColor: "#ccc", borderStyle: "dashed", opacity: 0.6 },
   icon: { color: "#d0021b", fontSize: 13, fontWeight: "800" },
 });
@@ -102,25 +125,31 @@ export function TeamFoulAndTimeoutBar({
   engine,
   side,
   align,
-  firstHalfCount,
+  settings,
 }: {
   teamId: string;
   teamName: string;
   engine: GameEngine;
   side: "home" | "away";
   align: "left" | "right";
-  /** League's `timeouts_first_half` (spec 6.8) — where the divider between
-      first- and second-half boxes is drawn. Must come from the league's
-      actual settings, not a hardcoded guess, or the divider lands in the
-      wrong place for any league not configured like the default. */
-  firstHalfCount: number;
+  settings: LeagueSettings;
 }) {
   const liveState = engine.liveState!;
   const teamState: LiveGameState["home"] = liveState[side];
+  // League's `timeouts_first_half` (spec 6.8) — where the divider between
+  // first- and second-half boxes is drawn. Must come from the league's
+  // actual settings, not a hardcoded guess, or the divider lands in the
+  // wrong place for any league not configured like the default.
+  const firstHalfCount = settings.timeouts_first_half;
 
   return (
     <View style={[styles.container, align === "right" && styles.containerReverse]}>
-      <FoulBox period={liveState.currentPeriod} count={teamState.teamFoulCount} status={teamState.penaltyStatus} />
+      <FoulBox
+        period={liveState.currentPeriod}
+        count={teamState.teamFoulCount}
+        status={teamState.penaltyStatus}
+        debugBoundary={regulationHalfBoundaryPeriod(settings)}
+      />
 
       <View style={styles.timeoutBlock}>
         <Text style={[styles.teamLabel, align === "right" && { textAlign: "right" }]} numberOfLines={1}>

@@ -141,7 +141,7 @@ export function TrackerScreen({
           engine={engine}
           side="home"
           align="left"
-          firstHalfCount={bundle.settings.timeouts_first_half}
+          settings={bundle.settings}
         />
         <TeamFoulAndTimeoutBar
           teamId={game.away_team_id}
@@ -149,7 +149,7 @@ export function TrackerScreen({
           engine={engine}
           side="away"
           align="right"
-          firstHalfCount={bundle.settings.timeouts_first_half}
+          settings={bundle.settings}
         />
       </View>
 
