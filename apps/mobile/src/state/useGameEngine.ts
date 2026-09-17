@@ -5,7 +5,6 @@ import {
   computeLiveGameState,
   filterVoidedEvents,
   createGameEvent,
-  canSubstituteIn,
   contextualHighlightForEvent,
   CONTEXTUAL_HIGHLIGHT_DURATION_MS,
   AUTO_PAUSE_EVENT_TYPES,
@@ -14,8 +13,9 @@ import {
   computeWtLadder,
   canDecrementPersonalFoul,
   PF_FROM_TECHNICAL_MESSAGE,
-  SUBSTITUTE_DISQUALIFIED_MESSAGE,
   DISQUALIFIED_PLAYER_STAT_MESSAGE,
+  validateSubstitution,
+  SUBSTITUTION_REJECTION_MESSAGES,
   type GameEvent,
   type EventType,
   type LiveGameState,
@@ -337,7 +337,7 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
     [liveState, game.home_team_id, recordCellForPlayer, bundle.players],
   );
 
-  /** Long-press: âˆ’1 on any row, including bench (spec 6.4, 6.5). */
+  /** Long-press: −1 on any row, including bench (spec 6.4, 6.5). */
   const longPressCell = useCallback(
     async (cellKey: StatCellKey, teamId: string, playerId: string | null) => {
       const def = STAT_CELLS[cellKey];
@@ -394,12 +394,17 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
   );
 
   // --- substitutions (spec 6.5) ---
+  // Single choke point for every substitution entry point (name-tap swap,
+  // bench-stat-cell prompt, disqualification sub-in). validateSubstitution
+  // is the defense-in-depth guard for spec fix A3 ("six players on court"):
+  // no caller, current or future, can add a player without removing one.
   const performSubstitution = useCallback(
     async (teamId: string, playerOut: string, playerIn: string) => {
       if (!liveState) return;
       const teamState = teamId === game.home_team_id ? liveState.home : liveState.away;
-      if (!canSubstituteIn(playerIn, teamState.disqualifiedPlayerIds)) {
-        setPrompt({ kind: "message", text: SUBSTITUTE_DISQUALIFIED_MESSAGE });
+      const result = validateSubstitution(teamState.onCourtPlayerIds, playerOut, playerIn, teamState.disqualifiedPlayerIds);
+      if (!result.valid) {
+        setPrompt({ kind: "message", text: SUBSTITUTION_REJECTION_MESSAGES[result.reason!] });
         return;
       }
       await appendEvent("substitution", teamId, null, { player_in: playerIn, player_out: playerOut });
@@ -408,7 +413,16 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
     [liveState, game.home_team_id, appendEvent, haptic],
   );
 
-  /** Name-tap swap (spec 6.5, method 1): tap out-player, then in-player, either order. */
+  /**
+   * Name-tap swap (spec 6.5, method 1): tap out-player, then in-player,
+   * either order. Fix A3: the two taps only form a valid swap when exactly
+   * one of them is currently on court — tapping two bench players (or two
+   * on-court players) in a row is not a valid pair, and must not be treated
+   * as one (that's exactly how a 6th player could silently appear before
+   * this fix: a "swap" between two bench players adds the in-player without
+   * ever actually removing anyone from the court). An invalid second tap
+   * restarts the selection instead of attempting the swap.
+   */
   const tapPlayerName = useCallback(
     (teamId: string, playerId: string) => {
       if (selectedNameForSwap && selectedNameForSwap.teamId === teamId) {
@@ -420,6 +434,13 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
         const b = playerId;
         const teamState = teamId === game.home_team_id ? liveState?.home : liveState?.away;
         const aOnCourt = teamState?.onCourtPlayerIds.includes(a) ?? false;
+        const bOnCourt = teamState?.onCourtPlayerIds.includes(b) ?? false;
+        if (aOnCourt === bOnCourt) {
+          // Both on court or both benched — not a valid swap. Treat this
+          // tap as starting a fresh selection rather than a silent no-op.
+          setSelectedNameForSwap({ teamId, playerId });
+          return;
+        }
         const [playerOut, playerIn] = aOnCourt ? [a, b] : [b, a];
         setSelectedNameForSwap(null);
         performSubstitution(teamId, playerOut, playerIn);

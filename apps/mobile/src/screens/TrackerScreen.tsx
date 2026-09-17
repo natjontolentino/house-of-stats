@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, StyleSheet, useWindowDimensions, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, StyleSheet, ScrollView, useWindowDimensions, ActivityIndicator } from "react-native";
 import { useKeepAwake } from "expo-keep-awake";
+import { StatusBar } from "expo-status-bar";
 import type { CachedGameBundle } from "../db/localDb";
 import { useGameEngine } from "../state/useGameEngine";
 import { TopBar } from "../components/TopBar";
-import { TeamGrid } from "../components/TeamGrid";
+import { TeamGridHeader, TeamGridRows } from "../components/TeamGrid";
 import { TeamFoulAndTimeoutBar } from "../components/TeamFoulAndTimeoutBar";
 import { PromptBar } from "../components/PromptBar";
 import { LastActionsLine } from "../components/LastActionsLine";
 import { MinutesPeekPanel } from "../components/MinutesPeekPanel";
 import { ReviewScreen } from "./ReviewScreen";
 import { isPracticeGameId } from "../state/practiceMode";
+import { teamShortLabel } from "../state/teamDisplay";
 
 const TABLET_BREAKPOINT = 900;
 
@@ -36,8 +38,8 @@ export function TrackerScreen({
 
   const engine = useGameEngine(gameId, bundle, deviceId);
   const game = bundle.game as { home_team_id: string; away_team_id: string };
-  const homeTeam = bundle.homeTeam as { name: string };
-  const awayTeam = bundle.awayTeam as { name: string };
+  const homeTeam = bundle.homeTeam as { name: string; short_name: string };
+  const awayTeam = bundle.awayTeam as { name: string; short_name: string };
 
   const startedRef = useRef(false);
   useEffect(() => {
@@ -68,12 +70,34 @@ export function TrackerScreen({
 
   return (
     <View style={styles.container}>
+      {/* Fix B4: immersive while a game is open so a notification banner
+          can't drop over the grid mid-possession; restored on other screens. */}
+      <StatusBar hidden style="light" />
       <TopBar bundle={bundle} engine={engine} />
 
       {isTablet ? (
-        <View style={styles.gridsRow}>
-          <TeamGrid bundle={bundle} teamId={game.home_team_id} engine={engine} pinOnCourtFirst={false} />
-          <TeamGrid bundle={bundle} teamId={game.away_team_id} engine={engine} pinOnCourtFirst={false} />
+        <View style={styles.tabletGridArea}>
+          <View style={styles.gridsRow}>
+            <View style={styles.gridColumn}>
+              <TeamGridHeader teamId={game.home_team_id} engine={engine} />
+            </View>
+            <View style={styles.gridColumn}>
+              <TeamGridHeader teamId={game.away_team_id} engine={engine} />
+            </View>
+          </View>
+          {/* Fix A2: one shared ScrollView for both teams — they can never
+              reach different scroll offsets, and the headers above never
+              scroll at all. */}
+          <ScrollView style={{ flex: 1 }}>
+            <View style={styles.gridsRow}>
+              <View style={styles.gridColumn}>
+                <TeamGridRows bundle={bundle} teamId={game.home_team_id} engine={engine} pinOnCourtFirst={false} />
+              </View>
+              <View style={styles.gridColumn}>
+                <TeamGridRows bundle={bundle} teamId={game.away_team_id} engine={engine} pinOnCourtFirst={false} />
+              </View>
+            </View>
+          </ScrollView>
         </View>
       ) : (
         <View style={{ flex: 1 }}>
@@ -82,27 +106,30 @@ export function TrackerScreen({
               style={[styles.toggleButton, activeSide === "home" && styles.toggleButtonActive]}
               onPress={() => setActiveSide("home")}
             >
-              <Text style={styles.toggleText}>{homeTeam.name}</Text>
+              <Text style={styles.toggleText}>{teamShortLabel(homeTeam)}</Text>
             </Pressable>
             <Pressable
               style={[styles.toggleButton, activeSide === "away" && styles.toggleButtonActive]}
               onPress={() => setActiveSide("away")}
             >
-              <Text style={styles.toggleText}>{awayTeam.name}</Text>
+              <Text style={styles.toggleText}>{teamShortLabel(awayTeam)}</Text>
             </Pressable>
           </View>
-          <TeamGrid
-            bundle={bundle}
-            teamId={activeSide === "home" ? game.home_team_id : game.away_team_id}
-            engine={engine}
-            pinOnCourtFirst
-          />
+          <TeamGridHeader teamId={activeSide === "home" ? game.home_team_id : game.away_team_id} engine={engine} />
+          <ScrollView style={{ flex: 1 }}>
+            <TeamGridRows
+              bundle={bundle}
+              teamId={activeSide === "home" ? game.home_team_id : game.away_team_id}
+              engine={engine}
+              pinOnCourtFirst
+            />
+          </ScrollView>
         </View>
       )}
 
       <View style={styles.foulsRow}>
-        <TeamFoulAndTimeoutBar teamId={game.home_team_id} teamName={homeTeam.name} engine={engine} side="home" align="left" />
-        <TeamFoulAndTimeoutBar teamId={game.away_team_id} teamName={awayTeam.name} engine={engine} side="away" align="right" />
+        <TeamFoulAndTimeoutBar teamId={game.home_team_id} teamName={teamShortLabel(homeTeam)} engine={engine} side="home" align="left" />
+        <TeamFoulAndTimeoutBar teamId={game.away_team_id} teamName={teamShortLabel(awayTeam)} engine={engine} side="away" align="right" />
       </View>
 
       <PromptBar engine={engine} />
@@ -162,7 +189,9 @@ function SyncBadge({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "white" },
   loading: { flex: 1, alignItems: "center", justifyContent: "center" },
-  gridsRow: { flex: 1, flexDirection: "row" },
+  tabletGridArea: { flex: 1 },
+  gridsRow: { flexDirection: "row" },
+  gridColumn: { flex: 1, minWidth: 0 },
   toggleRow: { flexDirection: "row" },
   toggleButton: { flex: 1, padding: 10, alignItems: "center", backgroundColor: "#eee" },
   toggleButtonActive: { backgroundColor: "#1a1a2e" },

@@ -3,13 +3,15 @@ import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
 import type { CachedGameBundle } from "../db/localDb";
 import type { GameEngine } from "../state/useGameEngine";
 import { CLOCK_SYNC_ADJUSTMENTS_MS, msToMinutesDisplay } from "@courtstats/shared";
+import { teamShortLabel } from "../state/teamDisplay";
+import { gridFont } from "../state/gridTheme";
 
 export function TopBar({ bundle, engine }: { bundle: CachedGameBundle; engine: GameEngine }) {
   const [syncOpen, setSyncOpen] = useState(false);
   const liveState = engine.liveState!;
   const game = bundle.game as { home_team_id: string; away_team_id: string };
-  const homeTeam = bundle.homeTeam as { name: string };
-  const awayTeam = bundle.awayTeam as { name: string };
+  const homeTeam = bundle.homeTeam as { name: string; short_name: string };
+  const awayTeam = bundle.awayTeam as { name: string; short_name: string };
 
   const confirmEndQuarter = () => {
     Alert.alert(
@@ -24,12 +26,14 @@ export function TopBar({ bundle, engine }: { bundle: CachedGameBundle; engine: G
 
   return (
     <View style={styles.bar}>
-      <TeamHeader name={homeTeam.name} score={liveState.home.score} />
+      <TeamHeader name={teamShortLabel(homeTeam)} score={liveState.home.score} />
 
       <View style={styles.center}>
         <Text style={styles.periodLabel}>Period {liveState.currentPeriod}</Text>
         {engine.clockMode !== "off" && (
-          <Text style={styles.clock}>{engine.clockMs !== null ? msToMinutesDisplay(engine.clockMs) : "--:--"}</Text>
+          <Text style={[styles.clock, { fontFamily: gridFont(true) }]}>
+            {engine.clockMs !== null ? msToMinutesDisplay(engine.clockMs) : "--:--"}
+          </Text>
         )}
 
         <View style={styles.controls}>
@@ -75,7 +79,7 @@ export function TopBar({ bundle, engine }: { bundle: CachedGameBundle; engine: G
         )}
       </View>
 
-      <TeamHeader name={awayTeam.name} score={liveState.away.score} />
+      <TeamHeader name={teamShortLabel(awayTeam)} score={liveState.away.score} />
     </View>
   );
 }
@@ -86,7 +90,7 @@ function TeamHeader({ name, score }: { name: string; score: number }) {
       <Text style={styles.teamName} numberOfLines={1}>
         {name}
       </Text>
-      <Text style={styles.score}>{score}</Text>
+      <Text style={[styles.score, { fontFamily: gridFont(true) }]}>{score}</Text>
     </View>
   );
 }

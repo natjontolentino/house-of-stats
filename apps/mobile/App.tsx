@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import * as Crypto from "expo-crypto";
 import { StatusBar } from "expo-status-bar";
+import { useFonts, RobotoCondensed_400Regular, RobotoCondensed_700Bold } from "@expo-google-fonts/roboto-condensed";
 import { GameListScreen } from "./src/screens/GameListScreen";
 import { LineupSetupScreen } from "./src/screens/LineupSetupScreen";
 import { TrackerScreen } from "./src/screens/TrackerScreen";
@@ -9,6 +10,7 @@ import { CompanionClockScreen } from "./src/screens/CompanionClockScreen";
 import { downloadAndClaimGame, createPracticeGameBundle } from "./src/sync/downloadBundle";
 import { getCachedGameBundle, getEventsForGame, type CachedGameBundle } from "./src/db/localDb";
 import { DEVICE_ID } from "./src/config/deviceConfig";
+import { setGridFontsReady } from "./src/state/gridTheme";
 import { SEED_GAMES } from "@courtstats/shared";
 
 type Screen =
@@ -20,6 +22,22 @@ type Screen =
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>({ name: "list" });
+
+  // Fix C1: the grid needs a condensed/neutral sans with tabular numerals,
+  // not the platform default — loaded once here, gating render until ready
+  // so no screen ever briefly flashes the wrong face.
+  const [fontsLoaded] = useFonts({ RobotoCondensed_400Regular, RobotoCondensed_700Bold });
+  useEffect(() => {
+    setGridFontsReady(fontsLoaded);
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   const openGame = async (gameId: string) => {
     setScreen({ name: "loading" });
@@ -119,6 +137,8 @@ export default function App() {
 
   return (
     <View style={styles.root}>
+      {/* TrackerScreen owns its own StatusBar (hidden — spec fix B4's
+          immersive mode); rendering another one here would conflict. */}
       <TrackerScreen
         gameId={screen.gameId}
         bundle={screen.bundle}
@@ -126,7 +146,6 @@ export default function App() {
         startingLineups={screen.startingLineups}
         onDone={() => setScreen({ name: "list" })}
       />
-      <StatusBar style="light" />
     </View>
   );
 }

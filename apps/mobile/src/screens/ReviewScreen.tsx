@@ -1,8 +1,135 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { View, Text, Pressable, ScrollView, StyleSheet, Alert } from "react-native";
 import type { CachedGameBundle } from "../db/localDb";
 import type { GameEngine } from "../state/useGameEngine";
-import { computeValidationWarnings, filterVoidedEvents } from "@courtstats/shared";
+import { computeValidationWarnings, filterVoidedEvents, computeTeamTotalsFromPlayers, type PlayerBoxLine, type TeamBoxLine } from "@courtstats/shared";
+import { colJersey, colName, colNarrow } from "../components/gridColumns";
+import { gridFont } from "../state/gridTheme";
+
+/**
+ * Fix Round 1, B5: the review screen is the last chance to catch an error
+ * before the game locks, so it must show the same full box score as the
+ * tracker grid (spec 6.13) — not just PTS/REB/AST/PF. Read-only, same
+ * column layout as TeamGrid for consistency.
+ */
+function FullBoxScoreTable({
+  bundle,
+  teamId,
+  players,
+  teamLine,
+}: {
+  bundle: CachedGameBundle;
+  teamId: string;
+  players: Record<string, PlayerBoxLine>;
+  teamLine: TeamBoxLine;
+}) {
+  const roster = bundle.rosterByTeam[teamId] ?? [];
+  const totals = computeTeamTotalsFromPlayers(teamId, players, teamLine);
+  const f = { fontFamily: gridFont() };
+  const fb = { fontFamily: gridFont(true) };
+
+  return (
+    <View style={boxStyles.table}>
+      <View style={boxStyles.headerRow}>
+        <Text style={[boxStyles.headerCell, colJersey]}>#</Text>
+        <Text style={[boxStyles.headerCell, colName, { textAlign: "left" }]}>Name</Text>
+        <Text style={[boxStyles.headerCell, colNarrow]}>PTS</Text>
+        <Text style={[boxStyles.headerCell, colNarrow]}>2PT</Text>
+        <Text style={[boxStyles.headerCell, colNarrow]}>3PT</Text>
+        <Text style={[boxStyles.headerCell, colNarrow]}>FT</Text>
+        <Text style={[boxStyles.headerCell, colNarrow]}>REB</Text>
+        <Text style={[boxStyles.headerCell, colNarrow]}>AST</Text>
+        <Text style={[boxStyles.headerCell, colNarrow]}>STL</Text>
+        <Text style={[boxStyles.headerCell, colNarrow]}>BLK</Text>
+        <Text style={[boxStyles.headerCell, colNarrow]}>TO</Text>
+        <Text style={[boxStyles.headerCell, colNarrow]}>PF</Text>
+        <Text style={[boxStyles.headerCell, colNarrow]}>W/T</Text>
+      </View>
+
+      {roster.map((playerId) => {
+        const p = players[playerId];
+        const player = bundle.players[playerId] as { nickname: string };
+        if (!p) return null;
+        return (
+          <View key={playerId} style={boxStyles.row}>
+            <Text style={[boxStyles.cell, colJersey, f]}>{bundle.jerseyByPlayer[playerId]}</Text>
+            <Text style={[boxStyles.cell, colName, boxStyles.name, f]} numberOfLines={1}>
+              {player?.nickname ?? "?"}
+            </Text>
+            <Text style={[boxStyles.cell, colNarrow, f]}>{p.points}</Text>
+            <Text style={[boxStyles.cell, colNarrow, f]}>
+              {p.twoPointMade}/{p.twoPointAttempted}
+            </Text>
+            <Text style={[boxStyles.cell, colNarrow, f]}>
+              {p.threePointMade}/{p.threePointAttempted}
+            </Text>
+            <Text style={[boxStyles.cell, colNarrow, f]}>
+              {p.ftMade}/{p.ftAttempted}
+            </Text>
+            <Text style={[boxStyles.cell, colNarrow, f]}>{p.reboundsTotal}</Text>
+            <Text style={[boxStyles.cell, colNarrow, f]}>{p.assists}</Text>
+            <Text style={[boxStyles.cell, colNarrow, f]}>{p.steals}</Text>
+            <Text style={[boxStyles.cell, colNarrow, f]}>{p.blocks}</Text>
+            <Text style={[boxStyles.cell, colNarrow, f]}>{p.turnovers}</Text>
+            <Text style={[boxStyles.cell, colNarrow, f]}>{p.personalFouls}</Text>
+            <Text style={[boxStyles.cell, colNarrow, f]}>{p.wtLabel}</Text>
+          </View>
+        );
+      })}
+
+      <View style={[boxStyles.row, boxStyles.teamRow]}>
+        <Text style={[boxStyles.cell, colJersey]}></Text>
+        <Text style={[boxStyles.cell, colName, boxStyles.name, f]}>Team</Text>
+        <Text style={[boxStyles.cell, colNarrow]}></Text>
+        <Text style={[boxStyles.cell, colNarrow]}></Text>
+        <Text style={[boxStyles.cell, colNarrow]}></Text>
+        <Text style={[boxStyles.cell, colNarrow]}></Text>
+        <Text style={[boxStyles.cell, colNarrow, f]}>
+          {teamLine.reboundsOffensive}/{teamLine.reboundsDefensive}
+        </Text>
+        <Text style={[boxStyles.cell, colNarrow]}></Text>
+        <Text style={[boxStyles.cell, colNarrow]}></Text>
+        <Text style={[boxStyles.cell, colNarrow]}></Text>
+        <Text style={[boxStyles.cell, colNarrow, f]}>{teamLine.turnovers}</Text>
+        <Text style={[boxStyles.cell, colNarrow]}></Text>
+        <Text style={[boxStyles.cell, colNarrow, f]}>{teamLine.benchWtLabel}</Text>
+      </View>
+
+      <View style={[boxStyles.row, boxStyles.totalsRow]}>
+        <Text style={[boxStyles.cell, colJersey]}></Text>
+        <Text style={[boxStyles.cell, colName, boxStyles.name, fb]}>Totals</Text>
+        <Text style={[boxStyles.cell, colNarrow, fb]}>{totals.points}</Text>
+        <Text style={[boxStyles.cell, colNarrow, fb]}>
+          {totals.fieldGoalMade - totals.threePointMade}/{totals.fieldGoalAttempted - totals.threePointAttempted}
+        </Text>
+        <Text style={[boxStyles.cell, colNarrow, fb]}>
+          {totals.threePointMade}/{totals.threePointAttempted}
+        </Text>
+        <Text style={[boxStyles.cell, colNarrow, fb]}>
+          {totals.ftMade}/{totals.ftAttempted}
+        </Text>
+        <Text style={[boxStyles.cell, colNarrow, fb]}>{totals.reboundsOffensive + totals.reboundsDefensive}</Text>
+        <Text style={[boxStyles.cell, colNarrow, fb]}>{totals.assists}</Text>
+        <Text style={[boxStyles.cell, colNarrow, fb]}>{totals.steals}</Text>
+        <Text style={[boxStyles.cell, colNarrow, fb]}>{totals.blocks}</Text>
+        <Text style={[boxStyles.cell, colNarrow, fb]}>{totals.turnovers}</Text>
+        <Text style={[boxStyles.cell, colNarrow, fb]}>{totals.personalFouls}</Text>
+        <Text style={[boxStyles.cell, colNarrow]}></Text>
+      </View>
+    </View>
+  );
+}
+
+const boxStyles = StyleSheet.create({
+  table: { marginTop: 8 },
+  headerRow: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#ccc", paddingBottom: 4 },
+  headerCell: { textAlign: "center", fontSize: 10, fontWeight: "700", color: "#666", textTransform: "uppercase" },
+  row: { flexDirection: "row", alignItems: "center", paddingVertical: 4, borderBottomWidth: 1, borderColor: "#eee" },
+  teamRow: { backgroundColor: "#f3f3f6" },
+  totalsRow: { backgroundColor: "#eaeaf0" },
+  cell: { textAlign: "center", fontSize: 12, fontVariant: ["tabular-nums"] },
+  name: { textAlign: "left", fontWeight: "600" },
+});
 
 /** Post-game review (spec 6.13 steps 2-3, 6.14 validation warnings). */
 export function ReviewScreen({
@@ -66,25 +193,15 @@ export function ReviewScreen({
         </View>
       )}
 
-      {[
-        [game.away_team_id, awayTeam.name],
-        [game.home_team_id, homeTeam.name],
-      ].map(([teamId, name]) => (
+      {(
+        [
+          [game.away_team_id, awayTeam.name, liveState.teams[game.away_team_id]],
+          [game.home_team_id, homeTeam.name, liveState.teams[game.home_team_id]],
+        ] as const
+      ).map(([teamId, name, teamLine]) => (
         <View key={teamId} style={{ marginTop: 16 }}>
           <Text style={styles.teamName}>{name}</Text>
-          {(bundle.rosterByTeam[teamId] ?? []).map((playerId) => {
-            const p = liveState.players[playerId];
-            const player = bundle.players[playerId] as { nickname: string };
-            if (!p) return null;
-            return (
-              <View key={playerId} style={styles.playerRow}>
-                <Text style={styles.playerName}>{player.nickname}</Text>
-                <Text style={styles.playerStats}>
-                  {p.points} PTS · {p.reboundsTotal} REB · {p.assists} AST · {p.personalFouls} PF
-                </Text>
-              </View>
-            );
-          })}
+          <FullBoxScoreTable bundle={bundle} teamId={teamId} players={liveState.players} teamLine={teamLine} />
         </View>
       ))}
 
@@ -128,9 +245,6 @@ const styles = StyleSheet.create({
   warningsTitle: { fontWeight: "700", marginBottom: 4, color: "#7a4a00" },
   warningText: { color: "#7a4a00", fontSize: 13 },
   teamName: { fontWeight: "700", fontSize: 15, marginBottom: 6 },
-  playerRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 4, borderBottomWidth: 1, borderColor: "#eee" },
-  playerName: { fontSize: 13 },
-  playerStats: { fontSize: 12, color: "#666" },
   signatureBox: { marginTop: 20 },
   signRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 8, borderBottomWidth: 1, borderColor: "#eee" },
   signLabel: { fontSize: 14 },

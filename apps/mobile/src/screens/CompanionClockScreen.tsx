@@ -4,6 +4,7 @@ import { useKeepAwake } from "expo-keep-awake";
 import { msToMinutesDisplay } from "@courtstats/shared";
 import { supabase } from "../sync/supabaseClient";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { gridFont } from "../state/gridTheme";
 
 /**
  * Companion clock mode (spec 6.9): a second person — usually the scoreboard
@@ -52,7 +53,7 @@ export function CompanionClockScreen({
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Companion clock</Text>
-      <Text style={styles.clock}>{msToMinutesDisplay(clockMs)}</Text>
+      <Text style={[styles.clock, { fontFamily: gridFont(true) }]}>{msToMinutesDisplay(clockMs)}</Text>
       <Pressable
         style={[styles.button, running ? styles.stopButton : styles.startButton]}
         onPress={() => setRunning((r) => !r)}

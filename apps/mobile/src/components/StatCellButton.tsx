@@ -1,19 +1,20 @@
 import { useRef, useState } from "react";
-import { Pressable, Text, StyleSheet } from "react-native";
+import { Pressable, Text, StyleSheet, type StyleProp, type ViewStyle } from "react-native";
+import { gridFont } from "../state/gridTheme";
 
 /** Tap = +1 (green flash), long-press (500ms) = -1 (red flash) — spec 6.4. */
 export function StatCellButton({
   value,
   disabled,
   highlighted,
-  width,
+  style,
   onTap,
   onLongPress,
 }: {
   value: number | string;
   disabled?: boolean;
   highlighted?: boolean;
-  width?: number;
+  style?: StyleProp<ViewStyle>;
   onTap: () => void;
   onLongPress: () => void;
 }) {
@@ -32,6 +33,7 @@ export function StatCellButton({
       // onLongPress too, and spec 6.4/6.5 requires long-press corrections to
       // keep working on bench players even though a tap is a no-op for them.
       delayLongPress={500}
+      android_ripple={{ color: "rgba(0,0,0,0.08)" }}
       onPress={() => {
         if (disabled) return;
         doFlash("green");
@@ -43,22 +45,28 @@ export function StatCellButton({
       }}
       style={[
         styles.cell,
-        width !== undefined && { width },
+        style,
         highlighted && styles.highlighted,
         flash === "green" && styles.flashGreen,
         flash === "red" && styles.flashRed,
         disabled && styles.disabled,
       ]}
     >
-      <Text style={[styles.text, disabled && styles.textDisabled]}>{value}</Text>
+      <Text
+        style={[styles.text, { fontFamily: gridFont(true) }, disabled && styles.textDisabled]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
+        {value}
+      </Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   cell: {
-    minWidth: 34,
     paddingVertical: 6,
+    paddingHorizontal: 2,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 4,
@@ -67,6 +75,10 @@ const styles = StyleSheet.create({
   flashGreen: { backgroundColor: "#bdf0d0" },
   flashRed: { backgroundColor: "#f7c7c7" },
   disabled: { opacity: 0.35 },
-  text: { fontVariant: ["tabular-nums"], fontSize: 13, fontWeight: "600" },
+  text: {
+    fontVariant: ["tabular-nums"],
+    fontSize: 13,
+    fontWeight: "600",
+  },
   textDisabled: { color: "#999" },
 });
