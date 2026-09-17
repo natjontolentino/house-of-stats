@@ -129,8 +129,11 @@ export function TeamFoulAndTimeoutBar({
         {/* Both teams' boxes read in the same slot 1→5 order regardless of
             which side of the screen they're on — mirroring the row here
             (as align === "right" once did) made the away team's timeouts
-            look inconsistent with the home team's at a glance. */}
-        <View style={styles.timeoutRow}>
+            look inconsistent with the home team's at a glance. Position
+            (not order) still needs to hug the foul box on its own side, so
+            align="right" pins the group to the row's right edge with
+            justifyContent instead. */}
+        <View style={[styles.timeoutRow, align === "right" && styles.timeoutRowRight]}>
           {teamState.timeoutBoxes.map((box, i) => (
             <View key={box.slot_index} style={styles.timeoutSlot}>
               {/* Divider between the first-half (2) and second-half (3) groups (spec 6.8). */}
@@ -155,6 +158,7 @@ const styles = StyleSheet.create({
   timeoutBlock: { flex: 1 },
   teamLabel: { fontSize: 11, fontWeight: "700", color: "#888", marginBottom: 4, textTransform: "uppercase" },
   timeoutRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  timeoutRowRight: { justifyContent: "flex-end" },
   timeoutSlot: { flexDirection: "row", alignItems: "center" },
   divider: { width: 1, height: 18, backgroundColor: "#ccc", marginRight: 6 },
 });
