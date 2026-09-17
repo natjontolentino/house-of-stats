@@ -121,7 +121,11 @@ export function TeamFoulAndTimeoutBar({
         <Text style={[styles.teamLabel, align === "right" && { textAlign: "right" }]} numberOfLines={1}>
           {teamName}
         </Text>
-        <View style={[styles.timeoutRow, align === "right" && { flexDirection: "row-reverse" }]}>
+        {/* Both teams' boxes read in the same slot 1→5 order regardless of
+            which side of the screen they're on — mirroring the row here
+            (as align === "right" once did) made the away team's timeouts
+            look inconsistent with the home team's at a glance. */}
+        <View style={styles.timeoutRow}>
           {teamState.timeoutBoxes.map((box, i) => (
             <View key={box.slot_index} style={styles.timeoutSlot}>
               {/* Divider between the first-half (2) and second-half (3) groups (spec 6.8). */}

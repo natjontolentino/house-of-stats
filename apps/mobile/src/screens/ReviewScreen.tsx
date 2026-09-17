@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { View, Text, Pressable, ScrollView, StyleSheet, Alert } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { CachedGameBundle } from "../db/localDb";
 import type { GameEngine } from "../state/useGameEngine";
 import { computeValidationWarnings, filterVoidedEvents, computeTeamTotalsFromPlayers, type PlayerBoxLine, type TeamBoxLine } from "@courtstats/shared";
@@ -143,6 +144,7 @@ export function ReviewScreen({
   onBackToTracking: () => void;
   onFinalized: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const liveState = engine.liveState!;
   const game = bundle.game as { home_team_id: string; away_team_id: string };
   const homeTeam = bundle.homeTeam as { name: string };
@@ -176,7 +178,10 @@ export function ReviewScreen({
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 20 }}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ padding: 20, paddingBottom: 20 + insets.bottom, paddingLeft: 20 + insets.left, paddingRight: 20 + insets.right }}
+    >
       <Text style={styles.title}>Review — {awayTeam.name} @ {homeTeam.name}</Text>
       <Text style={styles.finalScore}>
         {liveState.away.score} — {liveState.home.score}

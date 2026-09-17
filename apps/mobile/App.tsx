@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Crypto from "expo-crypto";
 import { StatusBar } from "expo-status-bar";
 import { useFonts, RobotoCondensed_400Regular, RobotoCondensed_700Bold } from "@expo-google-fonts/roboto-condensed";
@@ -21,6 +22,14 @@ type Screen =
   | { name: "companion"; gameId: string };
 
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppInner />
+    </SafeAreaProvider>
+  );
+}
+
+function AppInner() {
   const [screen, setScreen] = useState<Screen>({ name: "list" });
 
   // Fix C1: the grid needs a condensed/neutral sans with tabular numerals,

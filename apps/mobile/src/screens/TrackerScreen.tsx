@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView, useWindowDimensions, ActivityIndicator } from "react-native";
 import { useKeepAwake } from "expo-keep-awake";
 import { StatusBar } from "expo-status-bar";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { CachedGameBundle } from "../db/localDb";
 import { useGameEngine } from "../state/useGameEngine";
 import { TopBar } from "../components/TopBar";
@@ -30,6 +31,7 @@ export function TrackerScreen({
   onDone: () => void;
 }) {
   useKeepAwake(); // spec 6.1: screen must stay awake while a game is open
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width >= TABLET_BREAKPOINT;
   const [activeSide, setActiveSide] = useState<"home" | "away">("home");
@@ -69,7 +71,12 @@ export function TrackerScreen({
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right },
+      ]}
+    >
       {/* Fix B4: immersive while a game is open so a notification banner
           can't drop over the grid mid-possession; restored on other screens. */}
       <StatusBar hidden style="light" />

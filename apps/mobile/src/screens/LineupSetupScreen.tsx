@@ -1,5 +1,6 @@
 ﻿import { useState } from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { CachedGameBundle } from "../db/localDb";
 
 /** Pre-game step 3 (spec 6.13): the tracker sets the starting five for each team. */
@@ -10,6 +11,7 @@ export function LineupSetupScreen({
   bundle: CachedGameBundle;
   onStart: (homeFive: string[], awayFive: string[]) => void;
 }) {
+  const insets = useSafeAreaInsets();
   const game = bundle.game as { home_team_id: string; away_team_id: string };
   const homeTeam = bundle.homeTeam as { name: string };
   const awayTeam = bundle.awayTeam as { name: string };
@@ -27,7 +29,12 @@ export function LineupSetupScreen({
   const ready = homeFive.length === 5 && awayFive.length === 5;
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { paddingBottom: 24 + insets.bottom, paddingLeft: 24 + insets.left, paddingRight: 24 + insets.right },
+      ]}
+    >
       <Text style={styles.title}>Set starting lineups</Text>
       <ScrollView horizontal contentContainerStyle={{ gap: 24 }}>
         <TeamPicker

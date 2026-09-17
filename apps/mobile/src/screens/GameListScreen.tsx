@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "../sync/supabaseClient";
 import { LEAGUE_ID } from "../config/deviceConfig";
 
@@ -21,6 +22,7 @@ export function GameListScreen({
   onStartPractice: () => void;
   onOpenCompanionClock: (gameId: string) => void;
 }) {
+  const insets = useSafeAreaInsets();
   const [games, setGames] = useState<GameListItem[] | null>(null);
   const [showingToday, setShowingToday] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +87,12 @@ export function GameListScreen({
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { paddingBottom: 24 + insets.bottom, paddingLeft: 24 + insets.left, paddingRight: 24 + insets.right },
+      ]}
+    >
       <Text style={styles.title}>{showingToday ? "Today's games" : "Scheduled games"}</Text>
       {games === null && !error && <ActivityIndicator style={{ marginTop: 24 }} />}
       {error && <Text style={styles.error}>{error}</Text>}
