@@ -135,8 +135,22 @@ export function TrackerScreen({
       )}
 
       <View style={styles.foulsRow}>
-        <TeamFoulAndTimeoutBar teamId={game.home_team_id} teamName={teamShortLabel(homeTeam)} engine={engine} side="home" align="left" />
-        <TeamFoulAndTimeoutBar teamId={game.away_team_id} teamName={teamShortLabel(awayTeam)} engine={engine} side="away" align="right" />
+        <TeamFoulAndTimeoutBar
+          teamId={game.home_team_id}
+          teamName={teamShortLabel(homeTeam)}
+          engine={engine}
+          side="home"
+          align="left"
+          firstHalfCount={bundle.settings.timeouts_first_half}
+        />
+        <TeamFoulAndTimeoutBar
+          teamId={game.away_team_id}
+          teamName={teamShortLabel(awayTeam)}
+          engine={engine}
+          side="away"
+          align="right"
+          firstHalfCount={bundle.settings.timeouts_first_half}
+        />
       </View>
 
       <PromptBar engine={engine} />

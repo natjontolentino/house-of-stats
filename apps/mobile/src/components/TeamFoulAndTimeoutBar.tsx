@@ -102,16 +102,21 @@ export function TeamFoulAndTimeoutBar({
   engine,
   side,
   align,
+  firstHalfCount,
 }: {
   teamId: string;
   teamName: string;
   engine: GameEngine;
   side: "home" | "away";
   align: "left" | "right";
+  /** League's `timeouts_first_half` (spec 6.8) — where the divider between
+      first- and second-half boxes is drawn. Must come from the league's
+      actual settings, not a hardcoded guess, or the divider lands in the
+      wrong place for any league not configured like the default. */
+  firstHalfCount: number;
 }) {
   const liveState = engine.liveState!;
   const teamState: LiveGameState["home"] = liveState[side];
-  const firstHalfCount = 2; // spec 6.8: two boxes for the first half, three for the second
 
   return (
     <View style={[styles.container, align === "right" && styles.containerReverse]}>
