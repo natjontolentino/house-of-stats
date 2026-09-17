@@ -29,13 +29,19 @@ export function StatCellButton({
 
   return (
     <Pressable
-      // Never pass RN's own `disabled` here — it silently swallows
-      // onLongPress too, and spec 6.4/6.5 requires long-press corrections to
-      // keep working on bench players even though a tap is a no-op for them.
+      // Never pass RN's own `disabled` here, and never gate onPress on the
+      // `disabled` prop either. It's easy to assume a bench player's cell
+      // should be a no-op on tap since they can't record a stat directly —
+      // but spec 6.5 requires that exact tap to open the implicit-
+      // substitution prompt (tapCell in useGameEngine.ts already handles
+      // this correctly). Gating onPress here silently swallowed that tap
+      // before it ever reached that logic — confirmed broken on a real
+      // device (Fix Round 2 retest) after being wrongly signed off as
+      // working from a code read that didn't trace this far. `disabled` is
+      // visual dimming only now, exactly like onLongPress already was.
       delayLongPress={500}
       android_ripple={{ color: "rgba(0,0,0,0.08)" }}
       onPress={() => {
-        if (disabled) return;
         doFlash("green");
         onTap();
       }}
