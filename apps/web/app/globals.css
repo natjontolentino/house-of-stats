@@ -24,6 +24,9 @@
   --green: #1a8f4c;
   --green-bg: #e3f6ea;
 
+  --cream-bg: #f3ece0;
+  --cream-card: #ece2d0;
+
   --radius: 12px;
   --radius-sm: 8px;
   --shadow-sm: 0 1px 2px rgba(16, 16, 24, 0.04), 0 1px 1px rgba(16, 16, 24, 0.03);
@@ -64,9 +67,13 @@ h3 {
 }
 
 .site-header__inner {
-  max-width: 960px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 14px 16px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .site-header__brand {
@@ -75,14 +82,71 @@ h3 {
   gap: 8px;
   color: white;
   font-weight: 800;
-  font-size: 17px;
+  font-size: 15px;
   text-decoration: none;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .site-header__mark {
   font-size: 18px;
   line-height: 1;
+}
+
+.site-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.site-header__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-header__link--active {
+  background: var(--navy-light);
+  color: white;
+}
+
+.site-header__link--active::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--red);
+}
+
+.site-header__cta {
+  background: white;
+  color: var(--navy);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Below this width the full nav wraps and overlaps the logo/CTA badly (no
+   hamburger menu yet) -- confirmed via a real mobile-viewport test. Hiding
+   the link row keeps the header to a clean brand + CTA row instead; the nav
+   destinations are placeholders anyway (SiteHeader.tsx), so nothing
+   reachable is actually lost yet. */
+@media (max-width: 640px) {
+  .site-header__nav {
+    display: none;
+  }
 }
 
 /* --- Shared building blocks --- */
@@ -91,6 +155,12 @@ h3 {
   max-width: 960px;
   margin: 0 auto;
   padding: 20px 16px 48px;
+}
+
+.wide-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .card {
@@ -203,4 +273,411 @@ tbody tr:nth-child(even) {
 
 tbody tr:hover {
   background: rgba(0, 0, 0, 0.03);
+}
+
+/* --- Landing page --- */
+
+.section-band {
+  padding: 56px 0;
+}
+
+.section-band__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.section-band__title {
+  font-size: 24px;
+  margin: 0;
+}
+
+.section-band__link {
+  color: var(--accent-dark);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Hero */
+
+.hero {
+  background: linear-gradient(160deg, var(--navy), #12121f);
+  padding: 64px 0 48px;
+}
+
+.hero__eyebrow {
+  color: var(--muted-light);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 16px;
+}
+
+.hero__title {
+  color: white;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.08;
+  margin: 0 0 20px;
+  max-width: 720px;
+}
+
+.hero__subtitle {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 16px;
+  line-height: 1.5;
+  max-width: 560px;
+  margin: 0 0 32px;
+}
+
+.hero__search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.hero__input {
+  flex: 1 1 280px;
+  min-width: 0;
+  padding: 13px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  font-size: 14px;
+}
+
+.hero__input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.button-primary {
+  background: var(--accent);
+  color: white;
+  border: 1px solid var(--accent-dark);
+  padding: 13px 22px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.hero__live-link {
+  color: var(--accent);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Live now */
+
+.live-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.live-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.live-card__status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.live-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.live-card__status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.live-card__status--live {
+  color: var(--red);
+}
+
+.live-card__status--live::before {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.live-card__status--delayed {
+  color: var(--muted-light);
+}
+
+.live-card__updated {
+  font-size: 11.5px;
+  color: var(--muted-light);
+}
+
+.live-card__team-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.live-card__score {
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.live-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.live-card__foot a {
+  color: var(--accent-dark);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Leagues */
+
+.league-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.league-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--cream-card);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.league-card__badge {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.league-card__name {
+  font-weight: 700;
+  font-size: 14.5px;
+  margin: 0 0 2px;
+}
+
+.league-card__meta {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.league-card--add {
+  background: transparent;
+  border: 1.5px dashed var(--border-strong);
+  color: var(--accent-dark);
+}
+
+.league-card__plus {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 20px;
+}
+
+/* Season leaders */
+
+.leaders-band {
+  background: var(--cream-bg);
+}
+
+.leaders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.leaders-card {
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.leaders-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.leaders-card__title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text);
+}
+
+.leaders-card__unit {
+  font-size: 11px;
+  color: var(--muted-light);
+  font-style: italic;
+}
+
+.leaders-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  font-size: 14px;
+}
+
+.leaders-row__rank {
+  width: 16px;
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--muted-light);
+  font-size: 13px;
+}
+
+.leaders-row__rank--first {
+  color: var(--accent-dark);
+}
+
+.leaders-row__name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.leaders-row__value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Player lookup */
+
+.player-lookup {
+  background: var(--navy);
+  padding: 48px 0;
+}
+
+.player-lookup__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.player-lookup__title {
+  color: white;
+  font-size: 24px;
+  margin: 0 0 8px;
+}
+
+.player-lookup__subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  max-width: 420px;
+  margin: 0;
+}
+
+.player-lookup__form {
+  display: flex;
+  gap: 10px;
+  flex: 0 1 380px;
+  width: 100%;
+}
+
+.button-secondary-light {
+  background: white;
+  color: var(--navy);
+  border: none;
+  padding: 13px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Footer */
+
+.site-footer {
+  background: var(--navy);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px 0;
+}
+
+.site-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.site-footer__copy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12.5px;
+}
+
+.site-footer__nav {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.site-footer__nav a {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 12.5px;
+  text-decoration: none;
 }

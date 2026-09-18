@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "CourtStats",
-  description: "Live basketball stats",
+  title: "House of Stats",
+  description: "Live basketball stats for local leagues",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
