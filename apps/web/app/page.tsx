@@ -4,25 +4,28 @@ import { LeaguesSection } from "../components/home/LeaguesSection";
 import { SeasonLeadersSection } from "../components/home/SeasonLeadersSection";
 import { PlayerLookupSection } from "../components/home/PlayerLookupSection";
 import { Footer } from "../components/Footer";
+import { fetchSeasonStats } from "../lib/seasonData";
+import { SEED_SEASON_ID } from "@courtstats/shared";
+
+export const dynamic = "force-dynamic";
 
 /**
- * Landing page redesign (placeholder-first pass, per user mockup): every
- * section below except the hero shell renders placeholder data for now.
- * Real data lands section by section as the underlying feature exists --
- * "Live now" can go real first (the single-game live/realtime mechanism
- * already works), "Leagues"/"Season leaders"/player lookup need actual
- * multi-league support and leaderboard computation, which are Phase 2 work.
- * The "For league organizers" marketing/lead-gen section from the mockup is
- * deliberately left out of this pass per the user's own call to scrap it
+ * Landing page redesign (placeholder-first pass, per user mockup), now with
+ * season leaders wired to real data (see apps/web/lib/seasonData.ts).
+ * "Live now" and "Leagues" are still placeholder -- multi-league support is
+ * Phase 2 work. The "For league organizers" marketing/lead-gen section from
+ * the mockup is deliberately left out per the user's own call to scrap it
  * for now.
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const { players, playersById, settings } = await fetchSeasonStats(SEED_SEASON_ID);
+
   return (
     <>
       <HeroSection liveCount={PLACEHOLDER_LIVE_COUNT} />
       <LiveNowSection />
       <LeaguesSection />
-      <SeasonLeadersSection />
+      <SeasonLeadersSection players={players} playersById={playersById} settings={settings} />
       <PlayerLookupSection />
       <Footer />
     </>

@@ -1,48 +1,59 @@
-interface LeaderRow {
-  name: string;
-  value: string;
-}
+import type { Player, PlayerSeasonLine } from "@courtstats/shared";
+import { displayPlayerName } from "@courtstats/shared";
 
 interface LeaderCategory {
   title: string;
-  rows: LeaderRow[];
+  rows: Array<{ name: string; value: string }>;
 }
 
-/** Placeholder leaders (landing page redesign, placeholder-first pass) — real leaderboard computation is Phase 2 work. */
-const CATEGORIES: LeaderCategory[] = [
-  {
-    title: "Points",
-    rows: [
-      { name: "D. Estevez", value: "24.6" },
-      { name: "R. Okafor", value: "22.1" },
-      { name: "J. Bosko", value: "20.8" },
-      { name: "T. Adjei", value: "19.4" },
-      { name: "M. Ilori", value: "18.9" },
-    ],
-  },
-  {
-    title: "Rebounds",
-    rows: [
-      { name: "K. Nakashima", value: "13.2" },
-      { name: "A. Delacroix", value: "11.7" },
-      { name: "S. Marchetti", value: "10.9" },
-      { name: "P. Adegoke", value: "10.1" },
-      { name: "L. Fetterman", value: "9.6" },
-    ],
-  },
-  {
-    title: "Assists",
-    rows: [
-      { name: "C. Ellery", value: "8.4" },
-      { name: "B. Vantong", value: "7.9" },
-      { name: "N. Talaman", value: "6.5" },
-      { name: "G. Yarbrough", value: "6.1" },
-      { name: "H. Mackleroy", value: "5.8" },
-    ],
-  },
-];
+function topFive(
+  players: PlayerSeasonLine[],
+  playersById: Record<string, Player>,
+  settings: Parameters<typeof displayPlayerName>[1],
+  metric: (p: PlayerSeasonLine) => number,
+  format: (v: number) => string,
+): Array<{ name: string; value: string }> {
+  return [...players]
+    .sort((a, b) => metric(b) - metric(a))
+    .slice(0, 5)
+    .map((p) => {
+      const player = playersById[p.playerId];
+      return { name: player ? displayPlayerName(player, settings) : "?", value: format(metric(p)) };
+    });
+}
 
-export function SeasonLeadersSection() {
+/**
+ * Season leaders (spec 9.2), computed from real finalized games -- see
+ * apps/web/lib/seasonData.ts. Renders an honest "not enough games yet"
+ * state instead of ever falling back to placeholder numbers, now that this
+ * section is wired to the real computation.
+ */
+export function SeasonLeadersSection({
+  players,
+  playersById,
+  settings,
+}: {
+  players: PlayerSeasonLine[];
+  playersById: Record<string, Player>;
+  settings: Parameters<typeof displayPlayerName>[1];
+}) {
+  const categories: LeaderCategory[] = [
+    {
+      title: "Points",
+      rows: topFive(players, playersById, settings, (p) => p.pointsPerGame, (v) => v.toFixed(1)),
+    },
+    {
+      title: "Rebounds",
+      rows: topFive(players, playersById, settings, (p) => p.reboundsPerGame, (v) => v.toFixed(1)),
+    },
+    {
+      title: "Assists",
+      rows: topFive(players, playersById, settings, (p) => p.assistsPerGame, (v) => v.toFixed(1)),
+    },
+  ];
+
+  const hasData = players.length > 0;
+
   return (
     <section id="leaders" className="section-band leaders-band">
       <div className="wide-page">
@@ -53,23 +64,30 @@ export function SeasonLeadersSection() {
           </a>
         </div>
 
-        <div className="leaders-grid">
-          {CATEGORIES.map((cat) => (
-            <div className="leaders-card" key={cat.title}>
-              <div className="leaders-card__head">
-                <span className="leaders-card__title">{cat.title}</span>
-                <span className="leaders-card__unit">per game</span>
-              </div>
-              {cat.rows.map((row, i) => (
-                <div className="leaders-row" key={row.name}>
-                  <span className={`leaders-row__rank${i === 0 ? " leaders-row__rank--first" : ""}`}>{i + 1}</span>
-                  <span className="leaders-row__name">{row.name}</span>
-                  <span className="leaders-row__value">{row.value}</span>
+        {!hasData ? (
+          <p className="card" style={{ padding: 16, color: "var(--muted)", background: "var(--panel)" }}>
+            No finalized games yet — leaders will appear once games have been played.
+          </p>
+        ) : (
+          <div className="leaders-grid">
+            {categories.map((cat) => (
+              <div className="leaders-card" key={cat.title}>
+                <div className="leaders-card__head">
+                  <span className="leaders-card__title">{cat.title}</span>
+                  <span className="leaders-card__unit">per game</span>
                 </div>
-              ))}
-            </div>
-          ))}
-        </div>
+                {cat.rows.map((row, i) => (
+                  <div className="leaders-row" key={row.name + i}>
+                    <span className={`leaders-row__rank${i === 0 ? " leaders-row__rank--first" : ""}`}>{i + 1}</span>
+                    <span className="leaders-row__name">{row.name}</span>
+                    <span className="leaders-row__value">{row.value}</span>
+                  </div>
+                ))}
+                {cat.rows.length === 0 && <p style={{ color: "var(--muted-light)", fontSize: 13 }}>No data yet.</p>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

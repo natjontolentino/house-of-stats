@@ -119,7 +119,7 @@ h3 {
   color: white;
 }
 
-.site-header__link--active::before {
+.site-header__link--live::before {
   content: "";
   width: 6px;
   height: 6px;

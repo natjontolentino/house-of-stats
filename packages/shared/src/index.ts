@@ -15,5 +15,7 @@ export * from "./logic/scoreByPeriod";
 export * from "./logic/privacy";
 export * from "./logic/contextualHighlight";
 export * from "./logic/eventFactory";
+export * from "./logic/seasonStats";
+export * from "./logic/standings";
 
 export * from "./seed/seedData";
