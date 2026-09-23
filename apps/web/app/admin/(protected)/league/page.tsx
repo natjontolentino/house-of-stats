@@ -1,12 +1,17 @@
 import { createSupabaseAdminClient } from "../../../../lib/supabaseAdminClient";
 import { SEED_LEAGUE_ID } from "@courtstats/shared";
-import { updateLeagueAction } from "./actions";
+import { updateLeagueAction, setLeagueLoginCodeAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminLeaguePage() {
   const supabase = createSupabaseAdminClient();
   const { data: league } = await supabase.from("league").select("*").eq("id", SEED_LEAGUE_ID).single();
+  const { data: credential } = await supabase
+    .from("league_credential")
+    .select("league_id")
+    .eq("league_id", SEED_LEAGUE_ID)
+    .maybeSingle();
 
   return (
     <main className="page" style={{ maxWidth: 480 }}>
@@ -38,6 +43,36 @@ export default async function AdminLeaguePage() {
 
         <button type="submit" className="button-primary" style={{ alignSelf: "flex-start" }}>
           Save
+        </button>
+      </form>
+
+      <h2 className="section-title" style={{ marginTop: 28 }}>
+        Mobile device login
+      </h2>
+      <form
+        action={setLeagueLoginCodeAction}
+        className="card"
+        style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}
+      >
+        <input type="hidden" name="leagueId" value={SEED_LEAGUE_ID} />
+        <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>
+          {credential
+            ? "A login code is set. Trackers enter it on the mobile app to sign into this league — the same phone or tablet can log out and log into a different league's code later."
+            : "No login code set yet. Set one so trackers can sign the mobile app into this league."}
+        </p>
+        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>{credential ? "Set a new code" : "Login code"}</span>
+          <input
+            type="text"
+            name="code"
+            required
+            minLength={4}
+            placeholder="At least 4 characters"
+            style={{ padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)", maxWidth: 220 }}
+          />
+        </label>
+        <button type="submit" className="button-primary" style={{ alignSelf: "flex-start" }}>
+          {credential ? "Update code" : "Set code"}
         </button>
       </form>
     </main>

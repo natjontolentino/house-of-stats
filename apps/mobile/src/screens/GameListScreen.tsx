@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "../sync/supabaseClient";
-import { LEAGUE_ID } from "../config/deviceConfig";
 
 interface GameListItem {
   id: string;
@@ -14,13 +13,19 @@ interface GameListItem {
 
 /** Pre-game step 1 (spec 6.13): the tracker sees only games assigned to them for today. */
 export function GameListScreen({
+  leagueId,
+  leagueName,
   onSelectGame,
   onStartPractice,
   onOpenCompanionClock,
+  onLogout,
 }: {
+  leagueId: string;
+  leagueName: string;
   onSelectGame: (gameId: string) => void;
   onStartPractice: () => void;
   onOpenCompanionClock: (gameId: string) => void;
+  onLogout: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const [games, setGames] = useState<GameListItem[] | null>(null);
@@ -31,7 +36,7 @@ export function GameListScreen({
     let cancelled = false;
     (async () => {
       try {
-        const { data: seasons } = await supabase.from("season").select("id").eq("league_id", LEAGUE_ID);
+        const { data: seasons } = await supabase.from("season").select("id").eq("league_id", leagueId);
         const seasonIds = (seasons ?? []).map((s) => s.id);
 
         const fetchGames = async (fromIso?: string, toIso?: string) => {
@@ -84,7 +89,7 @@ export function GameListScreen({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [leagueId]);
 
   return (
     <View
@@ -100,7 +105,15 @@ export function GameListScreen({
         },
       ]}
     >
-      <Text style={styles.title}>{showingToday ? "Today's games" : "Scheduled games"}</Text>
+      <View style={styles.headerRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>{showingToday ? "Today's games" : "Scheduled games"}</Text>
+          <Text style={styles.leagueName}>{leagueName}</Text>
+        </View>
+        <Pressable onPress={onLogout} hitSlop={8}>
+          <Text style={styles.logoutLink}>Log out</Text>
+        </Pressable>
+      </View>
       {games === null && !error && <ActivityIndicator style={{ marginTop: 24 }} />}
       {error && <Text style={styles.error}>{error}</Text>}
       {games && games.length === 0 && <Text style={styles.muted}>No games scheduled.</Text>}
@@ -137,7 +150,10 @@ export function GameListScreen({
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24, backgroundColor: "#f5f5f7" },
-  title: { fontSize: 22, fontWeight: "700", marginBottom: 16 },
+  headerRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 16 },
+  title: { fontSize: 22, fontWeight: "700" },
+  leagueName: { fontSize: 13, color: "#666", marginTop: 2 },
+  logoutLink: { fontSize: 13, color: "#1a1a2e", fontWeight: "600", paddingTop: 4 },
   muted: { color: "#666" },
   error: { color: "#b00020", marginBottom: 12 },
   card: { backgroundColor: "white", borderRadius: 10, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: "#e2e2e6" },

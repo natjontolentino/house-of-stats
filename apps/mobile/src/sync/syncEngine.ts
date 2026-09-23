@@ -1,7 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { getUnsyncedEvents, markEventsSynced } from "../db/localDb";
 import { isPracticeGameId } from "../state/practiceMode";
-import { DEVICE_ID } from "../config/deviceConfig";
 
 export type SyncStatus = "synced" | "pending" | "offline";
 
@@ -9,12 +8,12 @@ let lastSyncError = false;
 let lastHeartbeatAt = 0;
 
 /** device.last_seen_at (spec 5.1) — a cheap signal for the organizer's sync-health dashboard (8.2). */
-async function touchDeviceHeartbeat() {
+async function touchDeviceHeartbeat(deviceId: string) {
   const now = Date.now();
   if (now - lastHeartbeatAt < 60_000) return;
   lastHeartbeatAt = now;
   try {
-    await supabase.from("device").update({ last_seen_at: new Date().toISOString() }).eq("id", DEVICE_ID);
+    await supabase.from("device").update({ last_seen_at: new Date().toISOString() }).eq("id", deviceId);
   } catch {
     // best-effort only
   }
@@ -26,10 +25,10 @@ async function touchDeviceHeartbeat() {
  * client_uuid (a unique constraint + ignoreDuplicates upsert), so a retried
  * write is never double-applied. Practice games (6.15) never sync.
  */
-export async function pushUnsyncedEvents(gameId: string): Promise<SyncStatus> {
+export async function pushUnsyncedEvents(gameId: string, deviceId: string): Promise<SyncStatus> {
   if (isPracticeGameId(gameId)) return "synced";
 
-  touchDeviceHeartbeat();
+  touchDeviceHeartbeat(deviceId);
 
   const unsynced = await getUnsyncedEvents(gameId);
   if (unsynced.length === 0) {
@@ -68,11 +67,11 @@ export async function pushUnsyncedEvents(gameId: string): Promise<SyncStatus> {
   return "pending";
 }
 
-export function startSyncLoop(getActiveGameId: () => string | null, intervalMs = 5000): () => void {
+export function startSyncLoop(getActiveGameId: () => string | null, deviceId: string, intervalMs = 5000): () => void {
   const id = setInterval(() => {
     const gameId = getActiveGameId();
     if (gameId) {
-      pushUnsyncedEvents(gameId).catch(() => {
+      pushUnsyncedEvents(gameId, deviceId).catch(() => {
         lastSyncError = true;
       });
     }

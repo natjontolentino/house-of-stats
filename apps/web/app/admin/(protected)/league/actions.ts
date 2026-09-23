@@ -35,3 +35,15 @@ export async function updateLeagueAction(formData: FormData) {
   revalidatePath("/admin/league");
   revalidatePath("/");
 }
+
+export async function setLeagueLoginCodeAction(formData: FormData) {
+  const leagueId = formData.get("leagueId");
+  const code = formData.get("code");
+  if (typeof leagueId !== "string" || typeof code !== "string" || code.trim().length < 4) {
+    return;
+  }
+
+  const supabase = createSupabaseAdminClient();
+  await supabase.rpc("set_league_login_code", { p_league_id: leagueId, p_code: code.trim() });
+  revalidatePath("/admin/league");
+}

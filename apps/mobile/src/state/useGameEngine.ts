@@ -182,7 +182,7 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
       return;
     }
     const runSync = () => {
-      pushUnsyncedEvents(gameId)
+      pushUnsyncedEvents(gameId, deviceId)
         .then(setSyncStatus)
         .catch(() => setSyncStatus("offline"))
         .finally(() => {
@@ -192,7 +192,7 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
     const id = setInterval(runSync, 5000);
     runSync();
     return () => clearInterval(id);
-  }, [gameId, isPractice]);
+  }, [gameId, isPractice, deviceId]);
 
   const stopClockLocally = useCallback(() => {
     if (settings.clock_mode === "tracker") {
@@ -241,7 +241,7 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
         stopClockLocally();
       }
       if (!isPractice) {
-        pushUnsyncedEvents(gameId)
+        pushUnsyncedEvents(gameId, deviceId)
           .then(setSyncStatus)
           .catch(() => setSyncStatus("offline"))
           .finally(() => {

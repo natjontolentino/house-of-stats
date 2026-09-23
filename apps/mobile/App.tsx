@@ -5,12 +5,13 @@ import * as Crypto from "expo-crypto";
 import { StatusBar } from "expo-status-bar";
 import { useFonts, RobotoCondensed_400Regular, RobotoCondensed_700Bold } from "@expo-google-fonts/roboto-condensed";
 import { GameListScreen } from "./src/screens/GameListScreen";
+import { LoginScreen } from "./src/screens/LoginScreen";
 import { LineupSetupScreen } from "./src/screens/LineupSetupScreen";
 import { TrackerScreen } from "./src/screens/TrackerScreen";
 import { CompanionClockScreen } from "./src/screens/CompanionClockScreen";
 import { downloadAndClaimGame, createPracticeGameBundle } from "./src/sync/downloadBundle";
 import { getCachedGameBundle, getEventsForGame, type CachedGameBundle } from "./src/db/localDb";
-import { DEVICE_ID } from "./src/config/deviceConfig";
+import { loadSession, clearSession, type LeagueSession } from "./src/auth/session";
 import { setGridFontsReady } from "./src/state/gridTheme";
 import { SEED_GAMES } from "@courtstats/shared";
 
@@ -31,6 +32,12 @@ export default function App() {
 
 function AppInner() {
   const [screen, setScreen] = useState<Screen>({ name: "list" });
+  // undefined = still checking SecureStore; null = not logged into any league.
+  const [session, setSession] = useState<LeagueSession | null | undefined>(undefined);
+
+  useEffect(() => {
+    loadSession().then((s) => setSession(s));
+  }, []);
 
   // Fix C1: the grid needs a condensed/neutral sans with tabular numerals,
   // not the platform default — loaded once here, gating render until ready
@@ -40,7 +47,7 @@ function AppInner() {
     setGridFontsReady(fontsLoaded);
   }, [fontsLoaded]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || session === undefined) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" />
@@ -48,10 +55,25 @@ function AppInner() {
     );
   }
 
+  if (session === null) {
+    return (
+      <View style={styles.root}>
+        <LoginScreen onLoggedIn={setSession} />
+        <StatusBar style="dark" />
+      </View>
+    );
+  }
+
+  const logout = async () => {
+    await clearSession();
+    setSession(null);
+    setScreen({ name: "list" });
+  };
+
   const openGame = async (gameId: string) => {
     setScreen({ name: "loading" });
     try {
-      const bundle = await downloadAndClaimGame(gameId, DEVICE_ID);
+      const bundle = await downloadAndClaimGame(gameId, session.deviceId);
       const gameStatus = (bundle.game as { status: string }).status;
       if (gameStatus === "in_progress") {
         setScreen({ name: "tracking", gameId, bundle });
@@ -94,9 +116,12 @@ function AppInner() {
     return (
       <View style={styles.root}>
         <GameListScreen
+          leagueId={session.leagueId}
+          leagueName={session.leagueName}
           onSelectGame={openGame}
           onStartPractice={startPractice}
           onOpenCompanionClock={(gameId) => setScreen({ name: "companion", gameId })}
+          onLogout={logout}
         />
         <StatusBar style="dark" />
       </View>
@@ -151,7 +176,7 @@ function AppInner() {
       <TrackerScreen
         gameId={screen.gameId}
         bundle={screen.bundle}
-        deviceId={DEVICE_ID}
+        deviceId={session.deviceId}
         startingLineups={screen.startingLineups}
         onDone={() => setScreen({ name: "list" })}
       />
