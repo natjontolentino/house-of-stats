@@ -34,7 +34,12 @@ export function ScoreHeader({
         boxShadow: "var(--shadow-md)",
       }}
     >
-      <TeamScore name={bundle.awayTeam.name} short={bundle.awayTeam.short_name} score={liveState.away.score} />
+      <TeamScore
+        name={bundle.awayTeam.name}
+        short={bundle.awayTeam.short_name}
+        score={liveState.away.score}
+        logoUrl={bundle.awayTeam.logo_url}
+      />
 
       <div style={{ textAlign: "center", minWidth: 92 }}>
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}>
@@ -53,14 +58,33 @@ export function ScoreHeader({
         </div>
       </div>
 
-      <TeamScore name={bundle.homeTeam.name} short={bundle.homeTeam.short_name} score={liveState.home.score} />
+      <TeamScore
+        name={bundle.homeTeam.name}
+        short={bundle.homeTeam.short_name}
+        score={liveState.home.score}
+        logoUrl={bundle.homeTeam.logo_url}
+      />
     </header>
   );
 }
 
-function TeamScore({ name, short, score }: { name: string; short: string; score: number }) {
+function TeamScore({
+  name,
+  short,
+  score,
+  logoUrl,
+}: {
+  name: string;
+  short: string;
+  score: number;
+  logoUrl: string | null;
+}) {
   return (
     <div style={{ textAlign: "center", minWidth: 92 }}>
+      {logoUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logoUrl} alt="" style={{ width: 32, height: 32, objectFit: "contain", marginBottom: 4 }} />
+      )}
       <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", fontWeight: 600 }} title={name}>
         {short}
       </div>
