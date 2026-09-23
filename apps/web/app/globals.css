@@ -6,8 +6,11 @@
      web, and exports. */
   --navy: #1a1a2e;
   --navy-light: #2a2a45;
-  --accent: #ff6b35;
-  --accent-dark: #e0501e;
+  /* Traced from the user's own design file (Mark.dc.html) rather than
+     guessed -- #D75A2C is that file's actual default accent, #B24A22 its
+     own link-hover shade of the same family. */
+  --accent: #d75a2c;
+  --accent-dark: #b24a22;
 
   --bg: #f4f4f6;
   --panel: #ffffff;

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "./Logo";
 
 const NAV_LINKS = [
   { href: "/", label: "Live" },
@@ -25,7 +26,7 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="site-header__inner">
         <Link href="/" className="site-header__brand">
-          <span className="site-header__mark">🏠</span>
+          <Logo size={22} />
           House of Stats
         </Link>
 
