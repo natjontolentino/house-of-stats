@@ -6,6 +6,7 @@ import { FRESHNESS_STALE_AFTER_MS } from "../../../lib/gameData";
 import { createSupabaseClient } from "../../../lib/supabaseClient";
 import { computeLiveGameState, selectPlayerOfGame, displayPlayerName, type GameEvent } from "@courtstats/shared";
 import { ScoreHeader } from "../../../components/ScoreHeader";
+import { TeamLogo } from "../../../components/TeamLogo";
 import { BoxScoreTable } from "../../../components/BoxScoreTable";
 import { PlayByPlay } from "../../../components/PlayByPlay";
 import { ExportButtons } from "../../../components/ExportButtons";
@@ -129,12 +130,18 @@ export function LiveGameView({ bundle }: { bundle: GameBundle }) {
       <ExportButtons gameId={bundle.game.id} />
 
       <section style={{ marginTop: 28 }}>
-        <h2 className="section-title">{bundle.homeTeam.name}</h2>
+        <h2 className="section-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <TeamLogo url={bundle.homeTeam.logo_url} size={24} />
+          {bundle.homeTeam.name}
+        </h2>
         <BoxScoreTable bundle={bundle} teamId={bundle.game.home_team_id} liveState={liveState} />
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2 className="section-title">{bundle.awayTeam.name}</h2>
+        <h2 className="section-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <TeamLogo url={bundle.awayTeam.logo_url} size={24} />
+          {bundle.awayTeam.name}
+        </h2>
         <BoxScoreTable bundle={bundle} teamId={bundle.game.away_team_id} liveState={liveState} />
       </section>
 

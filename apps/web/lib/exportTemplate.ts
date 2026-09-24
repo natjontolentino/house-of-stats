@@ -18,6 +18,12 @@ function esc(value: unknown): string {
   return String(value ?? "").replace(/[&<>"']/g, (c) => map[c]);
 }
 
+/** Inline team logo for the export HTML; drops itself if the image fails to load rather than leaving a broken-image icon. */
+function logoImg(url: string | null, px: number, extraStyle = ""): string {
+  if (!url) return "";
+  return `<img src="${esc(url)}" alt="" width="${px}" height="${px}" onerror="this.remove()" style="object-fit:contain;vertical-align:middle;${extraStyle}" />`;
+}
+
 function cellStyle(header = false): string {
   return `border:1px solid #ccc;padding:4px 8px;text-align:center;font-weight:${header ? 700 : 400};font-size:${header ? 10 : 12}px;text-transform:${header ? "uppercase" : "none"};`;
 }
@@ -62,7 +68,12 @@ export function renderScoresheetHtml(bundle: GameBundle, liveState: LiveGameStat
   const awayTotals = computeTeamTotalsFromPlayers(bundle.game.away_team_id, liveState.players, liveState.teams[bundle.game.away_team_id]);
   const pog = playerOfGame(bundle, liveState);
 
-  const teamSection = (teamId: string, teamName: string, totals: ReturnType<typeof computeTeamTotalsFromPlayers>) => {
+  const teamSection = (
+    teamId: string,
+    teamName: string,
+    logoUrl: string | null,
+    totals: ReturnType<typeof computeTeamTotalsFromPlayers>,
+  ) => {
     const ids = bundle.rosterByTeam[teamId] ?? [];
     const headers = ["#", "Player", "PTS", "2PT", "3PT", "FT", "REB", "AST", "STL", "BLK", "TO", "PF"];
     const rows = ids
@@ -88,7 +99,7 @@ export function renderScoresheetHtml(bundle: GameBundle, liveState: LiveGameStat
       .join("");
 
     return `<table style="width:100%;border-collapse:collapse;margin-top:8px">
-      <caption style="text-align:left;font-weight:700;padding:4px 0">${esc(teamName)}</caption>
+      <caption style="text-align:left;font-weight:700;padding:4px 0">${logoImg(logoUrl, 20, "margin-right:6px;")}${esc(teamName)}</caption>
       <thead><tr>${headers.map((h) => `<th style="${cellStyle(true)}">${h}</th>`).join("")}</tr></thead>
       <tbody>
         ${rows}
@@ -136,12 +147,12 @@ export function renderScoresheetHtml(bundle: GameBundle, liveState: LiveGameStat
       <thead><tr><th style="${cellStyle(true)}">Team</th>${periodHeaderCells}<th style="${cellStyle(true)}">Final</th></tr></thead>
       <tbody>
         <tr>
-          <td style="${cellStyle()};text-align:left">${esc(bundle.awayTeam.short_name)}</td>
+          <td style="${cellStyle()};text-align:left">${logoImg(bundle.awayTeam.logo_url, 16, "margin-right:6px;")}${esc(bundle.awayTeam.short_name)}</td>
           ${awayPeriodCells}
           <td style="${cellStyle()};font-weight:700">${liveState.away.score}</td>
         </tr>
         <tr>
-          <td style="${cellStyle()};text-align:left">${esc(bundle.homeTeam.short_name)}</td>
+          <td style="${cellStyle()};text-align:left">${logoImg(bundle.homeTeam.logo_url, 16, "margin-right:6px;")}${esc(bundle.homeTeam.short_name)}</td>
           ${homePeriodCells}
           <td style="${cellStyle()};font-weight:700">${liveState.home.score}</td>
         </tr>
@@ -158,8 +169,8 @@ export function renderScoresheetHtml(bundle: GameBundle, liveState: LiveGameStat
       (${liveState.home.timeoutBoxes.filter((b) => b.status === "expired").length} expired)
     </p>
 
-    ${teamSection(bundle.game.away_team_id, bundle.awayTeam.name, awayTotals)}
-    ${teamSection(bundle.game.home_team_id, bundle.homeTeam.name, homeTotals)}
+    ${teamSection(bundle.game.away_team_id, bundle.awayTeam.name, bundle.awayTeam.logo_url, awayTotals)}
+    ${teamSection(bundle.game.home_team_id, bundle.homeTeam.name, bundle.homeTeam.logo_url, homeTotals)}
 
     ${pog ? `<p style="margin-top:16px;font-weight:700">Player of the game: ${esc(playerName(bundle, pog.playerId))}</p>` : ""}
     ${signatureBlock}
@@ -211,11 +222,13 @@ export function renderGraphicHtml(bundle: GameBundle, liveState: LiveGameState):
       <div style="font-size:28px;opacity:0.7;margin-bottom:24px">${esc(statusLabel)}</div>
       <div style="display:flex;align-items:center;gap:40px">
         <div style="text-align:center">
+          ${logoImg(bundle.awayTeam.logo_url, 96, "display:block;margin:0 auto 12px;")}
           <div style="font-size:28px;opacity:0.8">${esc(bundle.awayTeam.short_name)}</div>
           <div style="font-size:96px;font-weight:800;font-variant-numeric:tabular-nums">${liveState.away.score}</div>
         </div>
         <div style="font-size:36px;opacity:0.5">–</div>
         <div style="text-align:center">
+          ${logoImg(bundle.homeTeam.logo_url, 96, "display:block;margin:0 auto 12px;")}
           <div style="font-size:28px;opacity:0.8">${esc(bundle.homeTeam.short_name)}</div>
           <div style="font-size:96px;font-weight:800;font-variant-numeric:tabular-nums">${liveState.home.score}</div>
         </div>

@@ -1,4 +1,5 @@
 import { fetchSeasonStats } from "../../lib/seasonData";
+import { TeamLogo } from "../../components/TeamLogo";
 import { SEED_SEASON_ID } from "@courtstats/shared";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +53,12 @@ export default async function StandingsPage() {
                 return (
                   <tr key={row.teamId}>
                     <td>{i + 1}</td>
-                    <td style={{ fontWeight: 700 }}>{team?.name ?? row.teamId}</td>
+                    <td style={{ fontWeight: 700 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        <TeamLogo url={team?.logo_url} />
+                        {team?.name ?? row.teamId}
+                      </span>
+                    </td>
                     <td>{row.gamesPlayed}</td>
                     <td>{row.wins}</td>
                     <td>{row.losses}</td>
