@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { createSupabaseAdminClient } from "../../../../lib/supabaseAdminClient";
-import { SEED_SEASON_ID } from "@courtstats/shared";
+import { getAdminLeagueContext } from "../../../../lib/adminLeague";
 import { createTeamAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminTeamsPage() {
   const supabase = createSupabaseAdminClient();
-  const { data: teams } = await supabase.from("team").select("*").eq("season_id", SEED_SEASON_ID).order("name");
+  const { season } = await getAdminLeagueContext();
+  const { data: teams } = await supabase.from("team").select("*").eq("season_id", season.id).order("name");
 
   return (
     <main className="page" style={{ maxWidth: 640 }}>
@@ -53,7 +54,7 @@ export default async function AdminTeamsPage() {
 
       <h2 className="section-title">Add a team</h2>
       <form action={createTeamAction} className="card" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
-        <input type="hidden" name="seasonId" value={SEED_SEASON_ID} />
+        <input type="hidden" name="seasonId" value={season.id} />
         <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontSize: 13, fontWeight: 600 }}>Team name</span>
           <input

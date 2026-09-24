@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { logoutAction } from "../login/actions";
+import { getAdminLeagueContext } from "../../../lib/adminLeague";
+import { LeagueSwitcher } from "../../../components/admin/LeagueSwitcher";
+import { selectLeagueAction } from "./leagueSwitchActions";
+
+export const dynamic = "force-dynamic";
 
 /** Nav shared by every real admin page. In the "(protected)" route group so /admin/login (outside it) never gets this bar — no point showing "Log out" before you're actually in. */
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const ctx = await getAdminLeagueContext();
   return (
     <>
       <div style={{ background: "var(--navy-light)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
@@ -25,7 +31,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Link>
           </nav>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Link href="/" style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>
+            <LeagueSwitcher leagues={ctx.leagues} currentId={ctx.league.id} action={selectLeagueAction} />
+            <Link href="/"style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>
               View site
             </Link>
             <form action={logoutAction}>

@@ -3,19 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseAdminClient } from "../../../../lib/supabaseAdminClient";
-import { SEED_SEASON_ID } from "@courtstats/shared";
 
 export async function createGameAction(formData: FormData) {
+  const seasonId = formData.get("seasonId");
   const homeTeamId = formData.get("homeTeamId");
   const awayTeamId = formData.get("awayTeamId");
   const scheduledAt = formData.get("scheduledAt");
   const courtLabel = formData.get("courtLabel");
-  if (typeof homeTeamId !== "string" || typeof awayTeamId !== "string" || typeof scheduledAt !== "string") return;
+  if (typeof seasonId !== "string" || typeof homeTeamId !== "string" || typeof awayTeamId !== "string" || typeof scheduledAt !== "string") return;
   if (homeTeamId === awayTeamId) return;
 
   const supabase = createSupabaseAdminClient();
   await supabase.from("game").insert({
-    season_id: SEED_SEASON_ID,
+    season_id: seasonId,
     home_team_id: homeTeamId,
     away_team_id: awayTeamId,
     scheduled_at: new Date(scheduledAt).toISOString(),

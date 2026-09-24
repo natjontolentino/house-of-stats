@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "../../../../../lib/supabaseAdminClient";
-import { NICKNAME_MAX_LENGTH, SEED_SEASON_ID } from "@courtstats/shared";
+import { NICKNAME_MAX_LENGTH } from "@courtstats/shared";
 
 function extFromFile(file: File): string {
   const fromName = file.name.split(".").pop();
@@ -71,8 +71,11 @@ export async function addPlayerAction(formData: FormData) {
 
   if (playerError || !player) return;
 
+  const { data: team } = await supabase.from("team").select("season_id").eq("id", teamId).single();
+  if (!team) return;
+
   await supabase.from("roster_entry").insert({
-    season_id: SEED_SEASON_ID,
+    season_id: team.season_id,
     team_id: teamId,
     player_id: player.id,
     jersey_number: jerseyNumber.trim(),

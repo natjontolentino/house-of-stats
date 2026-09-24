@@ -1,16 +1,17 @@
 import { createSupabaseAdminClient } from "../../../../lib/supabaseAdminClient";
-import { SEED_SEASON_ID } from "@courtstats/shared";
+import { getAdminLeagueContext } from "../../../../lib/adminLeague";
 import { createGameAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminGamesPage() {
   const supabase = createSupabaseAdminClient();
-  const { data: teams } = await supabase.from("team").select("*").eq("season_id", SEED_SEASON_ID).order("name");
+  const { season } = await getAdminLeagueContext();
+  const { data: teams } = await supabase.from("team").select("*").eq("season_id", season.id).order("name");
   const { data: games } = await supabase
     .from("game")
     .select("*")
-    .eq("season_id", SEED_SEASON_ID)
+    .eq("season_id", season.id)
     .order("scheduled_at", { ascending: false });
 
   const teamsById: Record<string, { name: string; short_name: string }> = {};
@@ -46,6 +47,7 @@ export default async function AdminGamesPage() {
         </p>
       ) : (
         <form action={createGameAction} className="card" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
+          <input type="hidden" name="seasonId" value={season.id} />
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 600 }}>Away team</span>
             <select name="awayTeamId" required style={{ padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)" }}>
