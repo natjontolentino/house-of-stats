@@ -8,6 +8,8 @@ export interface LeagueSession {
   leagueId: string;
   leagueName: string;
   deviceId: string;
+  /** Secret issued at login; every write to the server must present it with deviceId. */
+  deviceToken: string;
 }
 
 /** A stable per-install identifier, independent of which league is currently logged in -- lets the same physical device be recognized (and reuse its device row) across league switches. */
@@ -23,7 +25,10 @@ export async function loadSession(): Promise<LeagueSession | null> {
   const raw = await SecureStore.getItemAsync(SESSION_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as LeagueSession;
+    const parsed = JSON.parse(raw) as Partial<LeagueSession>;
+    // Sessions saved before device tokens existed can no longer write -- force a fresh login.
+    if (!parsed.leagueId || !parsed.leagueName || !parsed.deviceId || !parsed.deviceToken) return null;
+    return parsed as LeagueSession;
   } catch {
     return null;
   }

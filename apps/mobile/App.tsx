@@ -73,7 +73,7 @@ function AppInner() {
   const openGame = async (gameId: string) => {
     setScreen({ name: "loading" });
     try {
-      const bundle = await downloadAndClaimGame(gameId, session.deviceId);
+      const bundle = await downloadAndClaimGame(gameId, session.deviceId, session.deviceToken);
       const gameStatus = (bundle.game as { status: string }).status;
       if (gameStatus === "in_progress") {
         setScreen({ name: "tracking", gameId, bundle });
@@ -177,6 +177,7 @@ function AppInner() {
         gameId={screen.gameId}
         bundle={screen.bundle}
         deviceId={session.deviceId}
+        deviceToken={session.deviceToken}
         startingLineups={screen.startingLineups}
         onDone={() => setScreen({ name: "list" })}
       />

@@ -32,8 +32,13 @@ export function LoginScreen({ onLoggedIn }: { onLoggedIn: (session: LeagueSessio
         return;
       }
 
-      const row = data as { league_id: string; league_name: string; device_id: string };
-      const session: LeagueSession = { leagueId: row.league_id, leagueName: row.league_name, deviceId: row.device_id };
+      const row = data as { league_id: string; league_name: string; device_id: string; device_token: string };
+      const session: LeagueSession = {
+        leagueId: row.league_id,
+        leagueName: row.league_name,
+        deviceId: row.device_id,
+        deviceToken: row.device_token,
+      };
       await saveSession(session);
       onLoggedIn(session);
     } catch {

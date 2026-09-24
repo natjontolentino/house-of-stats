@@ -39,7 +39,7 @@ function defaultClockMsForPeriod(period: number, settings: CachedGameBundle["set
   return minutes * 60_000;
 }
 
-export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId: string) {
+export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId: string, deviceToken: string) {
   const settings = bundle.settings;
   const game = bundle.game as { home_team_id: string; away_team_id: string; status: GameStatus };
   const isPractice = isPracticeGameId(gameId);
@@ -182,7 +182,7 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
       return;
     }
     const runSync = () => {
-      pushUnsyncedEvents(gameId, deviceId)
+      pushUnsyncedEvents(gameId, deviceId, deviceToken)
         .then(setSyncStatus)
         .catch(() => setSyncStatus("offline"))
         .finally(() => {
@@ -192,7 +192,7 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
     const id = setInterval(runSync, 5000);
     runSync();
     return () => clearInterval(id);
-  }, [gameId, isPractice, deviceId]);
+  }, [gameId, isPractice, deviceId, deviceToken]);
 
   const stopClockLocally = useCallback(() => {
     if (settings.clock_mode === "tracker") {
@@ -241,7 +241,7 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
         stopClockLocally();
       }
       if (!isPractice) {
-        pushUnsyncedEvents(gameId, deviceId)
+        pushUnsyncedEvents(gameId, deviceId, deviceToken)
           .then(setSyncStatus)
           .catch(() => setSyncStatus("offline"))
           .finally(() => {
@@ -250,7 +250,7 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
       }
       return newEvent;
     },
-    [gameId, deviceId, liveState?.currentPeriod, settings.clock_mode, stopClockLocally, isPractice],
+    [gameId, deviceId, deviceToken, liveState?.currentPeriod, settings.clock_mode, stopClockLocally, isPractice],
   );
 
   const findLastMatching = useCallback(
@@ -602,16 +602,13 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
     await appendEvent("game_finalized", null, null, {});
     if (!isPractice) {
       try {
-        await supabase
-          .from("game")
-          .update({ status: "finalized", finalized_at: new Date().toISOString() })
-          .eq("id", gameId);
+        await supabase.rpc("device_finalize_game", { p_device_id: deviceId, p_token: deviceToken, p_game_id: gameId });
       } catch {
         // offline — the finalized status still syncs next time events push,
         // and game_finalized is already recorded locally as the source of truth.
       }
     }
-  }, [appendEvent, isPractice, gameId]);
+  }, [appendEvent, isPractice, gameId, deviceId, deviceToken]);
 
   // --- pre-game (spec 6.13) ---
   const startGame = useCallback(

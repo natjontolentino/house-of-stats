@@ -21,12 +21,14 @@ export function TrackerScreen({
   gameId,
   bundle,
   deviceId,
+  deviceToken,
   startingLineups,
   onDone,
 }: {
   gameId: string;
   bundle: CachedGameBundle;
   deviceId: string;
+  deviceToken: string;
   startingLineups?: { home: string[]; away: string[] };
   onDone: () => void;
 }) {
@@ -38,7 +40,7 @@ export function TrackerScreen({
   const [minutesOpen, setMinutesOpen] = useState(false);
   const [reviewing, setReviewing] = useState(false);
 
-  const engine = useGameEngine(gameId, bundle, deviceId);
+  const engine = useGameEngine(gameId, bundle, deviceId, deviceToken);
   const game = bundle.game as { home_team_id: string; away_team_id: string };
   const homeTeam = bundle.homeTeam as { name: string; short_name: string };
   const awayTeam = bundle.awayTeam as { name: string; short_name: string };

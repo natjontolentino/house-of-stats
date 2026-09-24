@@ -12,6 +12,7 @@ import { isPracticeGameId } from "../state/practiceMode";
 export async function downloadAndClaimGame(
   gameId: string,
   deviceId: string,
+  deviceToken: string,
   options: { claimLock?: boolean } = {},
 ): Promise<CachedGameBundle> {
   const claimLock = options.claimLock ?? true;
@@ -98,14 +99,7 @@ export async function downloadAndClaimGame(
   // template (spec 6.15) — that must never touch the real game's lock/status.
   if (claimLock) {
     try {
-      await supabase
-        .from("game")
-        .update({
-          locked_by_device_id: deviceId,
-          lock_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-          status: game.status === "scheduled" ? "in_progress" : game.status,
-        })
-        .eq("id", gameId);
+      await supabase.rpc("device_claim_game", { p_device_id: deviceId, p_token: deviceToken, p_game_id: gameId });
     } catch {
       // offline — proceed with the cached bundle; lock claim retried on next sync.
     }
@@ -123,7 +117,7 @@ export async function createPracticeGameBundle(
   templateGameId: string,
   practiceGameId: string,
 ): Promise<CachedGameBundle> {
-  const template = await downloadAndClaimGame(templateGameId, "unused", { claimLock: false });
+  const template = await downloadAndClaimGame(templateGameId, "unused", "unused", { claimLock: false });
   const practiceGame = {
     ...(template.game as Record<string, unknown>),
     id: practiceGameId,
@@ -133,16 +127,4 @@ export async function createPracticeGameBundle(
   const bundle: CachedGameBundle = { ...template, game: practiceGame };
   await cacheGameBundle(practiceGameId, bundle, true);
   return bundle;
-}
-
-/** Renews the lock while this device holds it (spec 7.2). Best-effort. */
-export async function renewGameLock(gameId: string, deviceId: string): Promise<void> {
-  try {
-    await supabase
-      .from("game")
-      .update({ locked_by_device_id: deviceId, lock_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString() })
-      .eq("id", gameId);
-  } catch {
-    // offline — fine, retried on next tick.
-  }
 }
