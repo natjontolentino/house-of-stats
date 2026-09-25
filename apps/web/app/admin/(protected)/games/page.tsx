@@ -1,6 +1,8 @@
 import { createSupabaseAdminClient } from "../../../../lib/supabaseAdminClient";
 import { getAdminLeagueContext } from "../../../../lib/adminLeague";
 import { createGameAction } from "./actions";
+import { LocalTime } from "../../../../components/LocalTime";
+import { ScheduledAtInput } from "../../../../components/admin/ScheduledAtInput";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +31,7 @@ export default async function AdminGamesPage() {
                 {teamsById[g.away_team_id]?.short_name ?? "?"} @ {teamsById[g.home_team_id]?.short_name ?? "?"}
               </div>
               <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                {new Date(g.scheduled_at).toLocaleString()} {g.court_label ? `· ${g.court_label}` : ""}
+                <LocalTime iso={g.scheduled_at} /> {g.court_label ? `· ${g.court_label}` : ""}
               </div>
             </div>
             <span className={`badge badge--${g.status === "in_progress" ? "live" : g.status === "finalized" ? "final" : "scheduled"}`}>
@@ -70,12 +72,7 @@ export default async function AdminGamesPage() {
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 600 }}>Date &amp; time</span>
-            <input
-              type="datetime-local"
-              name="scheduledAt"
-              required
-              style={{ padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)" }}
-            />
+            <ScheduledAtInput name="scheduledAt" />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 600 }}>Court (optional)</span>

@@ -47,10 +47,6 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-
-        <Link href="#" className="site-header__cta">
-          For organizers
-        </Link>
       </div>
     </header>
   );

@@ -6,6 +6,7 @@ import { COOKIE_NAME, isValidSessionCookie } from "../../../lib/adminSession";
 import { selectLeagueAction } from "../../admin/(protected)/leagueSwitchActions";
 import { StandingsTable } from "../../../components/StandingsTable";
 import { TeamLogo } from "../../../components/TeamLogo";
+import { LocalTime } from "../../../components/LocalTime";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +69,7 @@ export default async function LeaguePage({ params }: { params: { slug: string } 
                     {teamsById[g.away_team_id]?.name ?? "?"} @ {teamsById[g.home_team_id]?.name ?? "?"}
                   </div>
                   <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                    {new Date(g.scheduled_at).toLocaleString()} {g.court_label ? `· ${g.court_label}` : ""}
+                    <LocalTime iso={g.scheduled_at} /> {g.court_label ? `· ${g.court_label}` : ""}
                   </div>
                 </div>
                 <span className={badge.className}>{badge.label}</span>
