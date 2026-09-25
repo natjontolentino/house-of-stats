@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { LeagueSummary } from "../../lib/leagueSummary";
 
 function initials(name: string): string {
@@ -21,14 +22,19 @@ export function LeaguesSection({ leagues }: { leagues: LeagueSummary[] }) {
       <div className="wide-page">
         <div className="section-band__head">
           <h2 className="section-band__title">Leagues</h2>
-          <a href="#" className="section-band__link">
-            See all leagues →
-          </a>
+          <span className="section-band__link" style={{ cursor: "default" }}>
+            {leagues.length} {leagues.length === 1 ? "league" : "leagues"}
+          </span>
         </div>
 
         <div className="league-grid">
           {leagues.map((l) => (
-            <div className="league-card" key={l.id}>
+            <Link
+              href={`/leagues/${l.slug}`}
+              className="league-card"
+              key={l.id}
+              style={{ textDecoration: "none", color: "inherit" }}
+            >
               {l.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -48,7 +54,7 @@ export function LeaguesSection({ leagues }: { leagues: LeagueSummary[] }) {
                     .join(" · ")}
                 </p>
               </div>
-            </div>
+            </Link>
           ))}
 
           <a href="#" className="league-card league-card--add" style={{ textDecoration: "none" }}>

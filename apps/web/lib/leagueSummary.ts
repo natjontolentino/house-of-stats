@@ -2,6 +2,7 @@ import { createSupabaseClient } from "./supabaseClient";
 
 export interface LeagueSummary {
   id: string;
+  slug: string;
   name: string;
   logoUrl: string | null;
   seasonName: string;
@@ -19,7 +20,7 @@ export async function fetchLeagueSummaries(): Promise<LeagueSummary[]> {
 
   const { data: leagues } = await supabase
     .from("league")
-    .select("id, name, logo_url")
+    .select("id, slug, name, logo_url")
     .eq("status", "active")
     .order("created_at");
   if (!leagues || leagues.length === 0) return [];
@@ -53,6 +54,7 @@ export async function fetchLeagueSummaries(): Promise<LeagueSummary[]> {
     const season = seasonByLeague.get(l.id);
     return {
       id: l.id,
+      slug: l.slug,
       name: l.name,
       logoUrl: l.logo_url,
       seasonName: season?.name ?? "",
