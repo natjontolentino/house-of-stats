@@ -5,7 +5,7 @@
 
 drop function if exists device_claim_game(uuid, text, uuid);
 
-create function device_claim_game(
+create or replace function device_claim_game(
   p_device_id uuid,
   p_token text,
   p_game_id uuid,
@@ -57,7 +57,7 @@ $$;
 -- held by another device.
 drop function if exists device_heartbeat(uuid, text);
 
-create function device_heartbeat(p_device_id uuid, p_token text, p_game_id uuid default null)
+create or replace function device_heartbeat(p_device_id uuid, p_token text, p_game_id uuid default null)
 returns void
 language plpgsql
 security definer

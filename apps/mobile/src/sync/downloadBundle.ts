@@ -10,6 +10,9 @@ export class GameLockedError extends Error {
   }
 }
 
+/** The server rejected the lock claim outright (not a network failure). */
+export class GameClaimError extends Error {}
+
 /**
  * Pre-game step 2 (spec 6.13): downloads both rosters and claims the game
  * lock. Also pulls any events that already synced for this game (spec 7.3
@@ -41,8 +44,14 @@ export async function downloadAndClaimGame(
         p_takeover: options.takeover ?? false,
       })
       .single();
+    // A failed request has no error code and falls through (offline). An error
+    // the server itself returned (bad token, missing function, wrong league)
+    // means the lock is NOT working, so it must not be mistaken for offline.
+    if (claimError?.code) {
+      throw new GameClaimError(claimError.message);
+    }
     const row = claim as { result: string; holder_label: string | null } | null;
-    if (!claimError && row?.result === "locked") {
+    if (row?.result === "locked") {
       throw new GameLockedError(row.holder_label);
     }
   }
