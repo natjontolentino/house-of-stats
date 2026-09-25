@@ -3,6 +3,13 @@ import { resolveLeagueSettings, type GameEvent } from "@courtstats/shared";
 import { cacheGameBundle, insertLocalEvent, getEventsForGame, type CachedGameBundle } from "../db/localDb";
 import { isPracticeGameId } from "../state/practiceMode";
 
+/** Another device holds a live lock on this game (spec 7.2). */
+export class GameLockedError extends Error {
+  constructor(public readonly holderLabel: string | null) {
+    super("Game is being tracked by another device.");
+  }
+}
+
 /**
  * Pre-game step 2 (spec 6.13): downloads both rosters and claims the game
  * lock. Also pulls any events that already synced for this game (spec 7.3
@@ -13,11 +20,32 @@ export async function downloadAndClaimGame(
   gameId: string,
   deviceId: string,
   deviceToken: string,
-  options: { claimLock?: boolean } = {},
+  options: { claimLock?: boolean; takeover?: boolean } = {},
 ): Promise<CachedGameBundle> {
   const claimLock = options.claimLock ?? true;
   const { data: game, error: gameError } = await supabase.from("game").select("*").eq("id", gameId).single();
   if (gameError || !game) throw new Error("Could not download game — check connection.");
+
+  // Spec 7.2: one device owns a game. Checked before anything is cached so a
+  // refused claim leaves no trace on this device. Skipped when only borrowing
+  // a real game's roster as a practice-mode template (spec 6.15). If the
+  // server can't be reached the claim is skipped rather than blocking — a
+  // game must stay trackable offline (spec principle 1) — and the heartbeat
+  // picks the lock up on the first sync.
+  if (claimLock) {
+    const { data: claim, error: claimError } = await supabase
+      .rpc("device_claim_game", {
+        p_device_id: deviceId,
+        p_token: deviceToken,
+        p_game_id: gameId,
+        p_takeover: options.takeover ?? false,
+      })
+      .single();
+    const row = claim as { result: string; holder_label: string | null } | null;
+    if (!claimError && row?.result === "locked") {
+      throw new GameLockedError(row.holder_label);
+    }
+  }
 
   const [{ data: homeTeam }, { data: awayTeam }] = await Promise.all([
     supabase.from("team").select("*").eq("id", game.home_team_id).single(),
@@ -91,18 +119,6 @@ export async function downloadAndClaimGame(
       recorded_by_user_id: evt.recorded_by_user_id,
       created_at: evt.created_at,
     });
-  }
-
-  // Best-effort lock claim — a game must still be trackable fully offline
-  // (spec principle 1), so a failure here does not block anything. Skipped
-  // entirely when only borrowing a real game's roster as a practice-mode
-  // template (spec 6.15) — that must never touch the real game's lock/status.
-  if (claimLock) {
-    try {
-      await supabase.rpc("device_claim_game", { p_device_id: deviceId, p_token: deviceToken, p_game_id: gameId });
-    } catch {
-      // offline — proceed with the cached bundle; lock claim retried on next sync.
-    }
   }
 
   return bundle;

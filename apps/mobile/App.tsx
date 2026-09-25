@@ -9,7 +9,7 @@ import { LoginScreen } from "./src/screens/LoginScreen";
 import { LineupSetupScreen } from "./src/screens/LineupSetupScreen";
 import { TrackerScreen } from "./src/screens/TrackerScreen";
 import { CompanionClockScreen } from "./src/screens/CompanionClockScreen";
-import { downloadAndClaimGame, createPracticeGameBundle } from "./src/sync/downloadBundle";
+import { downloadAndClaimGame, createPracticeGameBundle, GameLockedError } from "./src/sync/downloadBundle";
 import { getCachedGameBundle, getEventsForGame, type CachedGameBundle } from "./src/db/localDb";
 import { loadSession, clearSession, type LeagueSession } from "./src/auth/session";
 import { setGridFontsReady } from "./src/state/gridTheme";
@@ -70,17 +70,30 @@ function AppInner() {
     setScreen({ name: "list" });
   };
 
-  const openGame = async (gameId: string) => {
+  const openGame = async (gameId: string, takeover = false) => {
     setScreen({ name: "loading" });
     try {
-      const bundle = await downloadAndClaimGame(gameId, session.deviceId, session.deviceToken);
+      const bundle = await downloadAndClaimGame(gameId, session.deviceId, session.deviceToken, { takeover });
       const gameStatus = (bundle.game as { status: string }).status;
       if (gameStatus === "in_progress") {
         setScreen({ name: "tracking", gameId, bundle });
       } else {
         setScreen({ name: "lineup", gameId, bundle });
       }
-    } catch {
+    } catch (e) {
+      if (e instanceof GameLockedError) {
+        setScreen({ name: "list" });
+        const who = e.holderLabel ? ` (${e.holderLabel})` : "";
+        Alert.alert(
+          "Already being tracked",
+          `Another device${who} is tracking this game. Only take over if that device is dead or the tracker has left — anything it hasn't synced yet will be lost.`,
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Take over", style: "destructive", onPress: () => openGame(gameId, true) },
+          ],
+        );
+        return;
+      }
       const cached = await getCachedGameBundle(gameId);
       if (cached) {
         // Airplane mode resume (spec principle 1, 6.13): the cached game row

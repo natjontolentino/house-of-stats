@@ -8,12 +8,13 @@ let lastSyncError = false;
 let lastHeartbeatAt = 0;
 
 /** device.last_seen_at (spec 5.1) — a cheap signal for the organizer's sync-health dashboard (8.2). */
-async function touchDeviceHeartbeat(deviceId: string, deviceToken: string) {
+async function touchDeviceHeartbeat(deviceId: string, deviceToken: string, gameId: string) {
   const now = Date.now();
   if (now - lastHeartbeatAt < 60_000) return;
   lastHeartbeatAt = now;
   try {
-    await supabase.rpc("device_heartbeat", { p_device_id: deviceId, p_token: deviceToken });
+    // Also renews this device's lock on the game it is tracking (spec 7.2).
+    await supabase.rpc("device_heartbeat", { p_device_id: deviceId, p_token: deviceToken, p_game_id: gameId });
   } catch {
     // best-effort only
   }
@@ -28,7 +29,7 @@ async function touchDeviceHeartbeat(deviceId: string, deviceToken: string) {
 export async function pushUnsyncedEvents(gameId: string, deviceId: string, deviceToken: string): Promise<SyncStatus> {
   if (isPracticeGameId(gameId)) return "synced";
 
-  touchDeviceHeartbeat(deviceId, deviceToken);
+  touchDeviceHeartbeat(deviceId, deviceToken, gameId);
 
   const unsynced = await getUnsyncedEvents(gameId);
   if (unsynced.length === 0) {
