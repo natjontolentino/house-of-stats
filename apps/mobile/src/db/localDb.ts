@@ -114,6 +114,12 @@ export async function markEventsSynced(clientUuids: string[]): Promise<void> {
   );
 }
 
+/** Drops events that never reached the server -- used when another device took over the game, since re-sending them would collide with the new owner's events. */
+export async function discardUnsyncedEventsForGame(gameId: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(`DELETE FROM local_game_event WHERE game_id = ? AND synced = 0`, [gameId]);
+}
+
 export interface CachedGameBundle {
   game: unknown;
   homeTeam: unknown;

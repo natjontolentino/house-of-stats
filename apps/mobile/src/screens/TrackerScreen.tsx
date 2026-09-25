@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet, ScrollView, useWindowDimensions, Act
 import { useKeepAwake } from "expo-keep-awake";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { CachedGameBundle } from "../db/localDb";
+import { discardUnsyncedEventsForGame, type CachedGameBundle } from "../db/localDb";
 import { useGameEngine } from "../state/useGameEngine";
 import { TopBar } from "../components/TopBar";
 import { TeamGridHeader, TeamGridRows } from "../components/TeamGrid";
@@ -57,6 +57,28 @@ export function TrackerScreen({
     return (
       <View style={styles.loading}>
         <ActivityIndicator />
+      </View>
+    );
+  }
+
+  if (engine.syncStatus === "displaced" && !isPracticeGameId(gameId)) {
+    return (
+      <View style={styles.displaced}>
+        <StatusBar style="dark" />
+        <Text style={styles.displacedTitle}>Another device took over this game</Text>
+        <Text style={styles.displacedBody}>
+          Another tracker opened this game on their device, so this one can no longer record it. Anything this device
+          recorded that hadn&apos;t synced yet can&apos;t be saved.
+        </Text>
+        <Pressable
+          style={styles.displacedButton}
+          onPress={async () => {
+            await discardUnsyncedEventsForGame(gameId);
+            onDone();
+          }}
+        >
+          <Text style={styles.displacedButtonText}>Back to games</Text>
+        </Pressable>
       </View>
     );
   }
@@ -226,6 +248,11 @@ function SyncBadge({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "white" },
   loading: { flex: 1, alignItems: "center", justifyContent: "center" },
+  displaced: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32, backgroundColor: "#f5f5f7" },
+  displacedTitle: { fontSize: 22, fontWeight: "700", marginBottom: 10, textAlign: "center" },
+  displacedBody: { fontSize: 15, color: "#555", textAlign: "center", maxWidth: 420, lineHeight: 22, marginBottom: 24 },
+  displacedButton: { backgroundColor: "#1a1a2e", borderRadius: 10, paddingVertical: 14, paddingHorizontal: 28 },
+  displacedButtonText: { color: "white", fontWeight: "700", fontSize: 15 },
   tabletGridArea: { flex: 1 },
   gridsRow: { flexDirection: "row" },
   gridColumn: { flex: 1, minWidth: 0 },

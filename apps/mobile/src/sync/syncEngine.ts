@@ -2,7 +2,8 @@ import { supabase } from "./supabaseClient";
 import { getUnsyncedEvents, markEventsSynced } from "../db/localDb";
 import { isPracticeGameId } from "../state/practiceMode";
 
-export type SyncStatus = "synced" | "pending" | "offline";
+/** "displaced": another device took over this game, so this one must stop recording. */
+export type SyncStatus = "synced" | "pending" | "offline" | "displaced";
 
 let lastSyncError = false;
 let lastHeartbeatAt = 0;
@@ -59,6 +60,7 @@ export async function pushUnsyncedEvents(gameId: string, deviceId: string, devic
     });
 
     if (error) {
+      if (error.message?.includes("game_lock_lost")) return "displaced";
       lastSyncError = true;
       return "offline";
     }
