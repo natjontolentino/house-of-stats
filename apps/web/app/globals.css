@@ -141,14 +141,19 @@ h3 {
   white-space: nowrap;
 }
 
-/* Below this width the full nav wraps and overlaps the logo/CTA badly (no
-   hamburger menu yet) -- confirmed via a real mobile-viewport test. Hiding
-   the link row keeps the header to a clean brand + CTA row instead; the nav
-   destinations are placeholders anyway (SiteHeader.tsx), so nothing
-   reachable is actually lost yet. */
+/* On phones the nav drops to its own full-width row under brand + CTA and
+   scrolls sideways, so Leagues and Standings stay reachable. */
 @media (max-width: 640px) {
+  .site-header__inner {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
   .site-header__nav {
-    display: none;
+    order: 3;
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

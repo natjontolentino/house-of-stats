@@ -13,7 +13,8 @@ export async function selectLeagueAction(formData: FormData) {
   const leagueId = formData.get("leagueId");
   if (typeof leagueId !== "string") return;
   selectLeague(leagueId);
-  redirect("/admin");
+  const next = formData.get("next");
+  redirect(typeof next === "string" && /^\/admin(\/[a-z]+)?$/.test(next) ? next : "/admin");
 }
 
 function slugify(name: string): string {

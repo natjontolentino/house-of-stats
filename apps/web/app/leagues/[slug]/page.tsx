@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { fetchLeagueBySlug } from "../../../lib/leaguePage";
+import { COOKIE_NAME, isValidSessionCookie } from "../../../lib/adminSession";
+import { selectLeagueAction } from "../../admin/(protected)/leagueSwitchActions";
 import { StandingsTable } from "../../../components/StandingsTable";
 import { TeamLogo } from "../../../components/TeamLogo";
 
@@ -18,6 +21,7 @@ export default async function LeaguePage({ params }: { params: { slug: string } 
   const { league, season, teams, games, stats } = data;
 
   const teamsById = Object.fromEntries(teams.map((t) => [t.id, t]));
+  const isAdmin = await isValidSessionCookie(cookies().get(COOKIE_NAME)?.value);
 
   return (
     <main className="page">
@@ -26,12 +30,21 @@ export default async function LeaguePage({ params }: { params: { slug: string } 
           // eslint-disable-next-line @next/next/no-img-element
           <img src={league.logo_url} alt="" style={{ width: 64, height: 64, objectFit: "contain" }} />
         )}
-        <div>
+        <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: 26, margin: 0 }}>{league.name}</h1>
           <p style={{ color: "var(--muted)", margin: "4px 0 0", fontSize: 14 }}>
             {season ? `${season.name} · ${teams.length} ${teams.length === 1 ? "team" : "teams"}` : "No season yet"}
           </p>
         </div>
+        {isAdmin && (
+          <form action={selectLeagueAction}>
+            <input type="hidden" name="leagueId" value={league.id} />
+            <input type="hidden" name="next" value="/admin/league" />
+            <button type="submit" className="button-secondary">
+              Edit this league
+            </button>
+          </form>
+        )}
       </div>
 
       <h2 className="section-title">Games</h2>
