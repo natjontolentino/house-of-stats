@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
+import { View, Text, Pressable, StyleSheet, Alert, Image } from "react-native";
 import type { CachedGameBundle } from "../db/localDb";
 import type { GameEngine } from "../state/useGameEngine";
 import { CLOCK_SYNC_ADJUSTMENTS_MS, msToMinutesDisplay, type LiveGameState } from "@courtstats/shared";
@@ -30,8 +30,8 @@ export function TopBar({
 }) {
   const [syncOpen, setSyncOpen] = useState(false);
   const liveState = engine.liveState!;
-  const homeTeam = bundle.homeTeam as { name: string; short_name: string };
-  const awayTeam = bundle.awayTeam as { name: string; short_name: string };
+  const homeTeam = bundle.homeTeam as { name: string; short_name: string; logo_url?: string | null };
+  const awayTeam = bundle.awayTeam as { name: string; short_name: string; logo_url?: string | null };
 
   const confirmEndQuarter = () => {
     Alert.alert(
@@ -93,6 +93,8 @@ export function TopBar({
           foulStatus={liveState.home.penaltyStatus}
         />
 
+        <LogoSlot url={homeTeam.logo_url} />
+
         <View style={styles.compactCenter}>
           <Text style={styles.compactPeriod}>Period {liveState.currentPeriod}</Text>
           {engine.clockMode !== "off" && (
@@ -111,6 +113,8 @@ export function TopBar({
           </View>
           {syncRow}
         </View>
+
+        <LogoSlot url={awayTeam.logo_url} />
 
         <CompactTeamHeader
           name={teamShortLabel(awayTeam)}
@@ -207,7 +211,18 @@ function CompactTeamHeader({
   );
 }
 
+/** Fills the gap between a team's score and the clock controls; shows the team logo when it has one (needs a connection the first time it loads). */
+function LogoSlot({ url }: { url?: string | null }) {
+  return (
+    <View style={styles.logoSlot}>
+      {url ? <Image source={{ uri: url }} style={styles.logo} resizeMode="contain" /> : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  logoSlot: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
+  logo: { width: 44, height: 44 },
   bar: {
     flexDirection: "row",
     justifyContent: "space-between",
