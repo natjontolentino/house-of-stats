@@ -60,7 +60,8 @@ export async function fetchLiveGames(): Promise<LiveGameSummary[]> {
     eventsByGame.get(e.game_id)!.push(e);
   });
 
-  return games.map((game) => {
+  // A game that has been opened on a tracker but has no plays yet isn't "live" -- it would only show as a delayed 0-0 game.
+  return games.filter((game) => (eventsByGame.get(game.id) ?? []).length > 0).map((game) => {
     const league = leaguesById.get(leagueIdBySeason.get(game.season_id) ?? "");
     const settings = resolveLeagueSettings(league?.settings);
     const events = eventsByGame.get(game.id) ?? [];
