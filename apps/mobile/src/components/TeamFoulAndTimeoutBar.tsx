@@ -201,7 +201,7 @@ export function CompactTeamFoulAndTimeoutBar({
   return (
     <View style={compactStyles.row}>
       <Text style={[compactStyles.foulText, { color, fontFamily: gridFont(true) }]}>
-        Q{liveState.currentPeriod} · {teamState.teamFoulCount} {caption}
+        Period {liveState.currentPeriod} · {teamState.teamFoulCount} {caption}
       </Text>
       <View style={compactStyles.timeoutRow}>
         {teamState.timeoutBoxes.map((box, i) => (
