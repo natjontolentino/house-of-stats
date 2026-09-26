@@ -81,7 +81,7 @@ export function LastActionsLine({ bundle, events }: { bundle: CachedGameBundle; 
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", gap: 12, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: "#f0f0f3" },
+  row: { flexDirection: "row", gap: 12, paddingHorizontal: 10, paddingVertical: 3, backgroundColor: "#f0f0f3" },
   // Widened from 160: the team+jersey prefix (Fix Round 2, B2) adds length.
   item: { fontSize: 11, color: "#444", maxWidth: 200 },
   muted: { fontSize: 11, color: "#999" },

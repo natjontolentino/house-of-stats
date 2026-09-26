@@ -122,7 +122,7 @@ export function PromptOverlay({ engine }: { engine: GameEngine }) {
 }
 
 const styles = StyleSheet.create({
-  bar: { padding: 8, backgroundColor: "#f0f0f3", borderTopWidth: 1, borderBottomWidth: 1, borderColor: "#ddd" },
+  bar: { paddingHorizontal: 8, paddingVertical: 4, backgroundColor: "#f0f0f3", borderTopWidth: 1, borderBottomWidth: 1, borderColor: "#ddd" },
   // Fix Round 2, B3: floats over the bottom of the grid area instead of
   // pushing it up. maxHeight caps how much of the grid it can ever cover,
   // so on-court players (pinned to the top, A6) stay visible even with an

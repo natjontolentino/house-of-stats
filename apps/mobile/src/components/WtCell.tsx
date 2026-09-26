@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Pressable, Text, StyleSheet, type StyleProp, type ViewStyle } from "react-native";
 import type { WtLevel } from "@courtstats/shared";
 import { gridFont } from "../state/gridTheme";
+import { useCellHeight } from "../state/gridSize";
 
 /** The W/T ladder cell — tap steps up, long-press steps down (spec 6.6). */
 export function WtCell({
@@ -21,6 +22,7 @@ export function WtCell({
 }) {
   const [flash, setFlash] = useState<"none" | "green" | "red">("none");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cellHeight = useCellHeight();
 
   const doFlash = (color: "green" | "red") => {
     if (timer.current) clearTimeout(timer.current);
@@ -46,6 +48,7 @@ export function WtCell({
       }}
       style={[
         styles.cell,
+        { height: cellHeight },
         style,
         level === 1 && styles.warn,
         level === 2 && styles.tech,

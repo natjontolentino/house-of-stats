@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   gridColumn: { flex: 1, minWidth: 0 },
   foulsRow: { flexDirection: "row", paddingHorizontal: 12, paddingVertical: 6, gap: 16 },
   bottomRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 8 },
-  bottomButtons: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6 },
+  bottomButtons: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 3 },
   syncBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
   syncBadgeText: { color: "white", fontSize: 10, fontWeight: "700" },
   minutesButton: { paddingHorizontal: 10, paddingVertical: 6, backgroundColor: "#eee", borderRadius: 6 },

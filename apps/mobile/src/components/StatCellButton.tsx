@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Pressable, Text, StyleSheet, type StyleProp, type ViewStyle } from "react-native";
 import { gridFont } from "../state/gridTheme";
+import { useCellHeight } from "../state/gridSize";
 
 /** Tap = +1 (green flash), long-press (500ms) = -1 (red flash) — spec 6.4. */
 export function StatCellButton({
@@ -20,6 +21,7 @@ export function StatCellButton({
 }) {
   const [flash, setFlash] = useState<"none" | "green" | "red">("none");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cellHeight = useCellHeight();
 
   const doFlash = (color: "green" | "red") => {
     if (timer.current) clearTimeout(timer.current);
@@ -51,6 +53,7 @@ export function StatCellButton({
       }}
       style={[
         styles.cell,
+        { height: cellHeight },
         style,
         highlighted && styles.highlighted,
         flash === "green" && styles.flashGreen,
