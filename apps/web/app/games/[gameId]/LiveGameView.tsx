@@ -48,6 +48,34 @@ export function LiveGameView({ bundle }: { bundle: GameBundle }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle.game.id]);
 
+  // Backup for the live connection: it can drop for a few seconds (phone hotspot,
+  // sleeping laptop) and does not replay what it missed, so re-read the game
+  // every 10s and take the server's copy as the truth.
+  useEffect(() => {
+    const supabase = supabaseRef.current;
+    let cancelled = false;
+    const refresh = async () => {
+      const [{ data: rows }, { data: game }] = await Promise.all([
+        supabase.from("game_event").select("*").eq("game_id", bundle.game.id).order("sequence", { ascending: true }),
+        supabase.from("game").select("status").eq("id", bundle.game.id).maybeSingle(),
+      ]);
+      if (cancelled) return;
+      if (rows) {
+        setEvents((prev) => {
+          const same = prev.length === rows.length && prev.every((e, i) => e.client_uuid === (rows[i] as GameEvent).client_uuid);
+          return same ? prev : (rows as GameEvent[]);
+        });
+      }
+      if (game) setGameStatus(game.status as typeof gameStatus);
+    };
+    const id = setInterval(refresh, 10_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bundle.game.id]);
+
   // Re-render periodically so the freshness message ("N minutes ago") stays current.
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 15_000);
