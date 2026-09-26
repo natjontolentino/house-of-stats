@@ -14,6 +14,7 @@ import { MinutesPeekPanel } from "../components/MinutesPeekPanel";
 import { ReviewScreen } from "./ReviewScreen";
 import { isPracticeGameId } from "../state/practiceMode";
 import { teamShortLabel } from "../state/teamDisplay";
+import { GridSizeContext, cellHeightForViewport } from "../state/gridSize";
 
 const TABLET_BREAKPOINT = 900;
 
@@ -39,6 +40,7 @@ export function TrackerScreen({
   const [activeSide, setActiveSide] = useState<"home" | "away">("home");
   const [minutesOpen, setMinutesOpen] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [phoneCellHeight, setPhoneCellHeight] = useState(40);
 
   const engine = useGameEngine(gameId, bundle, deviceId, deviceToken);
   const game = bundle.game as { home_team_id: string; away_team_id: string };
@@ -141,20 +143,27 @@ export function TrackerScreen({
             </ScrollView>
           </View>
         ) : (
-          <View style={{ flex: 1 }}>
-            {/* Fix Round 2, A3: the separate toggle tab row is gone — tapping
-                a team's score in TopBar now switches the active side, which
-                reclaims a full row of phone height at no functional cost. */}
-            <TeamGridHeader teamId={activeSide === "home" ? game.home_team_id : game.away_team_id} engine={engine} />
-            <ScrollView style={{ flex: 1 }}>
-              <TeamGridRows
-                bundle={bundle}
-                teamId={activeSide === "home" ? game.home_team_id : game.away_team_id}
-                engine={engine}
-                pinOnCourtFirst
-              />
-            </ScrollView>
-          </View>
+          <GridSizeContext.Provider value={phoneCellHeight}>
+            <View style={{ flex: 1 }}>
+              {/* Fix Round 2, A3: the separate toggle tab row is gone — tapping
+                  a team's score in TopBar now switches the active side, which
+                  reclaims a full row of phone height at no functional cost. */}
+              <TeamGridHeader teamId={activeSide === "home" ? game.home_team_id : game.away_team_id} engine={engine} />
+              {/* Row height is derived from the room this scroll area actually has,
+                  so all five on-court players fit on any phone, not just one model. */}
+              <ScrollView
+                style={{ flex: 1 }}
+                onLayout={(e) => setPhoneCellHeight(cellHeightForViewport(e.nativeEvent.layout.height))}
+              >
+                <TeamGridRows
+                  bundle={bundle}
+                  teamId={activeSide === "home" ? game.home_team_id : game.away_team_id}
+                  engine={engine}
+                  pinOnCourtFirst
+                />
+              </ScrollView>
+            </View>
+          </GridSizeContext.Provider>
         )}
 
         <PromptOverlay engine={engine} />
