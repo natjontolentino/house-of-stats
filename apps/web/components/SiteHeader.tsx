@@ -10,7 +10,7 @@ const NAV_LINKS = [
   { href: "#", label: "Players" },
   { href: "/#leaders", label: "Leaderboards" },
   { href: "/standings", label: "Standings" },
-  { href: "#", label: "Schedule" },
+  { href: "/schedule", label: "Schedule" },
 ];
 
 /**
