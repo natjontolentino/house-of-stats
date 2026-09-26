@@ -94,7 +94,7 @@ export function TopBar({
         />
 
         <View style={styles.compactCenter}>
-          <Text style={styles.compactPeriod}>P{liveState.currentPeriod}</Text>
+          <Text style={styles.compactPeriod}>Period {liveState.currentPeriod}</Text>
           {engine.clockMode !== "off" && (
             <Text style={[styles.compactClock, { fontFamily: gridFont(true) }]}>
               {engine.clockMs !== null ? msToMinutesDisplay(engine.clockMs) : "--:--"}
