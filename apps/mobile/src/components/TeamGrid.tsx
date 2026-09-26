@@ -70,8 +70,8 @@ export function TeamGridHeader({ teamId, engine }: { teamId: string; engine: Gam
         <Text style={[styles.headerSubCell, colNarrow]}>✗</Text>
         <Text style={[styles.headerSubCell, colNarrow]}>✓</Text>
         <Text style={[styles.headerSubCell, colNarrow]}>✗</Text>
-        <Text style={[styles.headerSubCell, colNarrow, highlightForTeam("OREB") && styles.headerHighlight]}>O</Text>
-        <Text style={[styles.headerSubCell, colNarrow, highlightForTeam("DREB") && styles.headerHighlight]}>D</Text>
+        <Text style={[styles.headerSubCell, colNarrow, highlightForTeam("OREB") && styles.headerHighlight]}>Off</Text>
+        <Text style={[styles.headerSubCell, colNarrow, highlightForTeam("DREB") && styles.headerHighlight]}>Def</Text>
         <Text style={[styles.headerCell, colNarrow, highlightForTeam("AST") && styles.headerHighlight]}>AST</Text>
         <Text style={[styles.headerCell, colNarrow]}>STL</Text>
         <Text style={[styles.headerCell, colNarrow]}>BLK</Text>
