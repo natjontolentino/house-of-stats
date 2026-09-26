@@ -5,9 +5,25 @@ export interface LeagueSummary {
   slug: string;
   name: string;
   logoUrl: string | null;
+  seasonId: string | null;
   seasonName: string;
   seasonStatus: string;
   teamCount: number;
+}
+
+/** The season whose games most recently started or finished across the given leagues -- what the home page's leaders should reflect. */
+export async function fetchFeaturedSeasonId(summaries: LeagueSummary[]): Promise<string | null> {
+  const seasonIds = summaries.map((s) => s.seasonId).filter((id): id is string => !!id);
+  if (seasonIds.length === 0) return null;
+  const supabase = createSupabaseClient();
+  const { data } = await supabase
+    .from("game")
+    .select("season_id")
+    .in("season_id", seasonIds)
+    .in("status", ["in_progress", "finalized"])
+    .order("scheduled_at", { ascending: false })
+    .limit(1);
+  return data?.[0]?.season_id ?? seasonIds[0];
 }
 
 /**
@@ -57,6 +73,7 @@ export async function fetchLeagueSummaries(): Promise<LeagueSummary[]> {
       slug: l.slug,
       name: l.name,
       logoUrl: l.logo_url,
+      seasonId: season?.id ?? null,
       seasonName: season?.name ?? "",
       seasonStatus: season?.status ?? "",
       teamCount: season ? teamCounts.get(season.id) ?? 0 : 0,

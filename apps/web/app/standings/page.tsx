@@ -1,16 +1,16 @@
+import Link from "next/link";
 import { fetchSeasonStats } from "../../lib/seasonData";
+import { fetchLeagueSummaries } from "../../lib/leagueSummary";
 import { StandingsTable } from "../../components/StandingsTable";
-import { SEED_SEASON_ID } from "@courtstats/shared";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Standings computed from every finalized game's actual score via the shared
- * computeStandings. This page is still scoped to the original seeded season;
- * every league's own standings are on its page at /leagues/[slug].
- */
+/** Standings for every active league, each computed from that league's finalized games via the shared computeStandings. */
 export default async function StandingsPage() {
-  const { standings, teamsById } = await fetchSeasonStats(SEED_SEASON_ID);
+  const leagues = await fetchLeagueSummaries();
+  const results = await Promise.all(
+    leagues.map(async (l) => ({ league: l, stats: l.seasonId ? await fetchSeasonStats(l.seasonId) : null })),
+  );
 
   return (
     <main className="page">
@@ -19,13 +19,23 @@ export default async function StandingsPage() {
         Computed from every finalized game this season.
       </p>
 
-      {standings.length === 0 ? (
-        <p className="card" style={{ padding: 16, color: "var(--muted)" }}>
-          No finalized games yet this season — standings will appear once the first game is finalized.
-        </p>
-      ) : (
-        <StandingsTable standings={standings} teamsById={teamsById} />
-      )}
+      {results.map(({ league, stats }) => (
+        <section key={league.id} style={{ marginBottom: 28 }}>
+          <h2 className="section-title">
+            <Link href={`/leagues/${league.slug}`} style={{ color: "inherit" }}>
+              {league.name}
+            </Link>
+            {league.seasonName ? ` · ${league.seasonName}` : ""}
+          </h2>
+          {stats && stats.standings.length > 0 ? (
+            <StandingsTable standings={stats.standings} teamsById={stats.teamsById} />
+          ) : (
+            <p className="card" style={{ padding: 16, color: "var(--muted)" }}>
+              No finalized games yet — standings will appear once the first game is finalized.
+            </p>
+          )}
+        </section>
+      ))}
     </main>
   );
 }

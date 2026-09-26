@@ -5,23 +5,23 @@ import { SeasonLeadersSection } from "../components/home/SeasonLeadersSection";
 import { PlayerLookupSection } from "../components/home/PlayerLookupSection";
 import { Footer } from "../components/Footer";
 import { fetchSeasonStats } from "../lib/seasonData";
-import { fetchLeagueSummaries } from "../lib/leagueSummary";
+import { fetchLeagueSummaries, fetchFeaturedSeasonId } from "../lib/leagueSummary";
 import { fetchLiveGames } from "../lib/liveGames";
-import { SEED_SEASON_ID } from "@courtstats/shared";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Landing page: season leaders, league directory and live games are all real
- * data. The "For league organizers" marketing section from the mockup is
- * deliberately left out per the user's own call to scrap it for now.
+ * Landing page: league directory, live games and season leaders are all real
+ * data. Leaders are shown for the league whose games most recently started or
+ * finished (each league's own page has its leaders too). The "For league
+ * organizers" marketing section from the mockup is deliberately left out per
+ * the user's own call to scrap it for now.
  */
 export default async function HomePage() {
-  const [{ players, playersById, settings }, leagues, liveGames] = await Promise.all([
-    fetchSeasonStats(SEED_SEASON_ID),
-    fetchLeagueSummaries(),
-    fetchLiveGames(),
-  ]);
+  const [leagues, liveGames] = await Promise.all([fetchLeagueSummaries(), fetchLiveGames()]);
+  const featuredSeasonId = await fetchFeaturedSeasonId(leagues);
+  const featured = featuredSeasonId ? await fetchSeasonStats(featuredSeasonId) : null;
+  const featuredLeague = leagues.find((l) => l.seasonId === featuredSeasonId);
   const liveCount = liveGames.filter((g) => g.status === "live").length;
 
   return (
@@ -29,7 +29,14 @@ export default async function HomePage() {
       <HeroSection liveCount={liveCount} />
       <LiveNowSection games={liveGames} />
       <LeaguesSection leagues={leagues} />
-      <SeasonLeadersSection players={players} playersById={playersById} settings={settings} />
+      {featured && (
+        <SeasonLeadersSection
+          players={featured.players}
+          playersById={featured.playersById}
+          settings={featured.settings}
+          leagueName={leagues.length > 1 ? featuredLeague?.name : undefined}
+        />
+      )}
       <PlayerLookupSection />
       <Footer />
     </>

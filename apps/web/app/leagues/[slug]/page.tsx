@@ -5,6 +5,7 @@ import { fetchLeagueBySlug } from "../../../lib/leaguePage";
 import { COOKIE_NAME, isValidSessionCookie } from "../../../lib/adminSession";
 import { selectLeagueAction } from "../../admin/(protected)/leagueSwitchActions";
 import { StandingsTable } from "../../../components/StandingsTable";
+import { SeasonLeadersSection } from "../../../components/home/SeasonLeadersSection";
 import { TeamLogo } from "../../../components/TeamLogo";
 import { LocalTime } from "../../../components/LocalTime";
 
@@ -25,6 +26,7 @@ export default async function LeaguePage({ params }: { params: { slug: string } 
   const isAdmin = await isValidSessionCookie(cookies().get(COOKIE_NAME)?.value);
 
   return (
+    <>
     <main className="page">
       <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "4px 0 24px" }}>
         {league.logo_url && (
@@ -104,5 +106,7 @@ export default async function LeaguePage({ params }: { params: { slug: string } 
         </div>
       )}
     </main>
+    {stats && <SeasonLeadersSection players={stats.players} playersById={stats.playersById} settings={stats.settings} />}
+    </>
   );
 }
