@@ -26,6 +26,12 @@
       "expo-sqlite",
       "expo-font",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "cc3a934b-0fe4-4612-b38e-0148c22efdf6"
+      }
+    },
+    "owner": "natjon"
   }
 }
