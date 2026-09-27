@@ -36,6 +36,30 @@ export async function updateLeagueAction(formData: FormData) {
   revalidatePath("/");
 }
 
+const CLOCK_MODES = ["off", "tracker", "companion"] as const;
+
+/** Game clock settings live in league.settings (jsonb); merge so every other setting is left untouched. */
+export async function updateClockSettingsAction(formData: FormData) {
+  const leagueId = formData.get("leagueId");
+  const clockMode = formData.get("clockMode");
+  const periodMinutes = Number(formData.get("periodLengthMinutes"));
+  if (typeof leagueId !== "string" || typeof clockMode !== "string") return;
+  if (!(CLOCK_MODES as readonly string[]).includes(clockMode)) return;
+  if (!Number.isFinite(periodMinutes) || periodMinutes < 1 || periodMinutes > 60) return;
+
+  const supabase = createSupabaseAdminClient();
+  const { data: league } = await supabase.from("league").select("settings").eq("id", leagueId).single();
+  if (!league) return;
+
+  const settings = {
+    ...((league.settings as Record<string, unknown> | null) ?? {}),
+    clock_mode: clockMode,
+    period_length_minutes: Math.round(periodMinutes),
+  };
+  await supabase.from("league").update({ settings }).eq("id", leagueId);
+  revalidatePath("/admin/league");
+}
+
 export async function setLeagueLoginCodeAction(formData: FormData) {
   const leagueId = formData.get("leagueId");
   const code = formData.get("code");

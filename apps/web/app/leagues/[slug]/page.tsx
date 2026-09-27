@@ -81,6 +81,12 @@ export default async function LeaguePage({ params }: { params: { slug: string } 
         </div>
       )}
 
+      <p style={{ margin: "0 0 20px" }}>
+        <Link href={`/leagues/${league.slug}/stats`} className="button-secondary">
+          Season stats — full player and team averages
+        </Link>
+      </p>
+
       <h2 className="section-title">Standings</h2>
       {stats && stats.standings.length > 0 ? (
         <div style={{ marginBottom: 28 }}>

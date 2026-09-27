@@ -17,5 +17,6 @@ export * from "./logic/contextualHighlight";
 export * from "./logic/eventFactory";
 export * from "./logic/seasonStats";
 export * from "./logic/standings";
+export * from "./logic/teamSeasonStats";
 
 export * from "./seed/seedData";

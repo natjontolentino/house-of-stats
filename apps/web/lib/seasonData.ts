@@ -5,13 +5,18 @@ import {
   computeLiveGameState,
   computePlayerSeasonStats,
   computeStandings,
+  computeTeamSeasonStats,
+  computeTeamTotalsFromPlayers,
   type PlayerBoxLine,
   type PlayerSeasonLine,
   type StandingsRow,
+  type TeamGameTotals,
+  type TeamSeasonLine,
 } from "@courtstats/shared";
 
 export interface SeasonStatsResult {
   players: PlayerSeasonLine[];
+  teamStats: TeamSeasonLine[];
   standings: StandingsRow[];
   playersById: Record<string, Player>;
   teamsById: Record<string, Team>;
@@ -30,7 +35,7 @@ export async function fetchSeasonStats(seasonId: string): Promise<SeasonStatsRes
 
   const { data: season } = await supabase.from("season").select("league_id").eq("id", seasonId).single();
   if (!season) {
-    return { players: [], standings: [], playersById: {}, teamsById: {}, settings: resolveLeagueSettings(null) };
+    return { players: [], teamStats: [], standings: [], playersById: {}, teamsById: {}, settings: resolveLeagueSettings(null) };
   }
 
   const { data: league } = await supabase.from("league").select("*").eq("id", season.league_id).single();
@@ -49,7 +54,7 @@ export async function fetchSeasonStats(seasonId: string): Promise<SeasonStatsRes
   teams.forEach((t) => (teamsById[t.id] = t));
 
   if (finalizedGames.length === 0) {
-    return { players: [], standings: [], playersById: {}, teamsById, settings };
+    return { players: [], teamStats: [], standings: [], playersById: {}, teamsById, settings };
   }
 
   const teamIds = teams.map((t) => t.id);
@@ -78,6 +83,7 @@ export async function fetchSeasonStats(seasonId: string): Promise<SeasonStatsRes
 
   const linesByPlayer = new Map<string, PlayerBoxLine[]>();
   const teamResults: Parameters<typeof computeStandings>[0] = [];
+  const teamGameTotals: TeamGameTotals[] = [];
 
   for (const game of finalizedGames) {
     const events = eventsByGame.get(game.id) ?? [];
@@ -95,6 +101,30 @@ export async function fetchSeasonStats(seasonId: string): Promise<SeasonStatsRes
     for (const player of Object.values(liveState.players)) {
       if (!linesByPlayer.has(player.playerId)) linesByPlayer.set(player.playerId, []);
       linesByPlayer.get(player.playerId)!.push(player);
+    }
+
+    for (const teamId of [game.home_team_id, game.away_team_id]) {
+      const totals = computeTeamTotalsFromPlayers(teamId, liveState.players, liveState.teams[teamId]);
+      const opponentScore = (teamId === game.home_team_id ? liveState.away : liveState.home).score;
+      teamGameTotals.push({
+        teamId,
+        gameId: game.id,
+        points: totals.points,
+        pointsAgainst: opponentScore,
+        fieldGoalMade: totals.fieldGoalMade,
+        fieldGoalAttempted: totals.fieldGoalAttempted,
+        threePointMade: totals.threePointMade,
+        threePointAttempted: totals.threePointAttempted,
+        ftMade: totals.ftMade,
+        ftAttempted: totals.ftAttempted,
+        reboundsOffensive: totals.reboundsOffensive,
+        reboundsDefensive: totals.reboundsDefensive,
+        assists: totals.assists,
+        steals: totals.steals,
+        blocks: totals.blocks,
+        turnovers: totals.turnovers,
+        personalFouls: totals.personalFouls,
+      });
     }
 
     const playedAt = game.finalized_at ?? game.scheduled_at;
@@ -124,5 +154,5 @@ export async function fetchSeasonStats(seasonId: string): Promise<SeasonStatsRes
 
   const standings = computeStandings(teamResults, settings.standings_tiebreakers);
 
-  return { players, standings, playersById, teamsById, settings };
+  return { players, teamStats: computeTeamSeasonStats(teamGameTotals), standings, playersById, teamsById, settings };
 }
