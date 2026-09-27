@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createSupabaseAdminClient } from "../../../../lib/supabaseAdminClient";
 import { getAdminLeagueContext } from "../../../../lib/adminLeague";
 import { createGameAction } from "./actions";
@@ -25,8 +26,8 @@ export default async function AdminGamesPage() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
         {(games ?? []).map((g) => (
-          <div key={g.id} className="card" style={{ padding: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
+          <div key={g.id} className="card" style={{ padding: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700, fontSize: 14 }}>
                 {teamsById[g.away_team_id]?.short_name ?? "?"} @ {teamsById[g.home_team_id]?.short_name ?? "?"}
               </div>
@@ -37,6 +38,9 @@ export default async function AdminGamesPage() {
             <span className={`badge badge--${g.status === "in_progress" ? "live" : g.status === "finalized" ? "final" : "scheduled"}`}>
               {g.status === "in_progress" ? "Live" : g.status === "finalized" ? "Final" : "Scheduled"}
             </span>
+            <Link href={`/admin/games/${g.id}`} className="button-secondary" style={{ fontSize: 12, padding: "6px 12px" }}>
+              Edit
+            </Link>
           </div>
         ))}
         {(games ?? []).length === 0 && <p style={{ color: "var(--muted)" }}>No games yet — schedule the first one below.</p>}
