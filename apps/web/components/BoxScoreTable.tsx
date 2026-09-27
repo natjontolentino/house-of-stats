@@ -38,6 +38,7 @@ export function BoxScoreTable({
             <th>PF</th>
             <th>W/T</th>
             <th>+/-</th>
+            <th>EFF</th>
             <th>MIN</th>
           </tr>
         </thead>
@@ -68,6 +69,7 @@ export function BoxScoreTable({
                 <td>{p.personalFouls}</td>
                 <td>{p.wtLabel}</td>
                 <td>{p.plusMinus > 0 ? `+${p.plusMinus}` : p.plusMinus}</td>
+                <td>{p.efficiency}</td>
                 <td>{p.minutesMs !== null ? msToMinutesDisplay(p.minutesMs) : "-"}</td>
               </tr>
             );
@@ -88,6 +90,7 @@ export function BoxScoreTable({
             <td>{teamLine?.turnovers ?? 0}</td>
             <td></td>
             <td>{teamLine?.benchWtLabel}</td>
+            <td></td>
             <td></td>
             <td></td>
           </tr>
@@ -115,6 +118,7 @@ export function BoxScoreTable({
             <td>{totals.personalFouls}</td>
             <td></td>
             <td></td>
+            <td>{playerIds.reduce((sum, id) => sum + (liveState.players[id]?.efficiency ?? 0), 0)}</td>
             <td></td>
           </tr>
         </tbody>

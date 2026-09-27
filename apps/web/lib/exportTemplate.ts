@@ -6,6 +6,7 @@ import {
   selectPlayerOfGame,
   filterVoidedEvents,
   displayPlayerName,
+  msToMinutesDisplay,
 } from "@courtstats/shared";
 
 function playerName(bundle: GameBundle, playerId: string): string {
@@ -75,7 +76,8 @@ export function renderScoresheetHtml(bundle: GameBundle, liveState: LiveGameStat
     totals: ReturnType<typeof computeTeamTotalsFromPlayers>,
   ) => {
     const ids = bundle.rosterByTeam[teamId] ?? [];
-    const headers = ["#", "Player", "PTS", "2PT", "3PT", "FT", "REB", "AST", "STL", "BLK", "TO", "PF"];
+    const headers = ["#", "Player", "PTS", "2PT", "3PT", "FT", "REB", "AST", "STL", "BLK", "TO", "PF", "EFF", "MIN"];
+    const teamEfficiency = ids.reduce((sum, pid) => sum + (liveState.players[pid]?.efficiency ?? 0), 0);
     const rows = ids
       .map((pid) => {
         const p = liveState.players[pid];
@@ -94,6 +96,8 @@ export function renderScoresheetHtml(bundle: GameBundle, liveState: LiveGameStat
           <td style="${cellStyle()}">${p.blocks}</td>
           <td style="${cellStyle()}">${p.turnovers}</td>
           <td style="${cellStyle()}">${p.personalFouls}</td>
+          <td style="${cellStyle()}">${p.efficiency}</td>
+          <td style="${cellStyle()}">${p.minutesMs !== null ? msToMinutesDisplay(p.minutesMs) : "-"}</td>
         </tr>`;
       })
       .join("");
@@ -116,6 +120,8 @@ export function renderScoresheetHtml(bundle: GameBundle, liveState: LiveGameStat
           <td style="${cellStyle()}">${totals.blocks}</td>
           <td style="${cellStyle()}">${totals.turnovers}</td>
           <td style="${cellStyle()}">${totals.personalFouls}</td>
+          <td style="${cellStyle()}">${teamEfficiency}</td>
+          <td style="${cellStyle()}"></td>
         </tr>
       </tbody>
     </table>`;
