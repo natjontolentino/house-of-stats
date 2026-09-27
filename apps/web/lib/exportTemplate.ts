@@ -1,4 +1,5 @@
 import type { GameBundle } from "./gameData";
+import { formatPhTime } from "./time";
 import type { LiveGameState } from "@courtstats/shared";
 import {
   computeScoreByPeriod,
@@ -147,7 +148,7 @@ export function renderScoresheetHtml(bundle: GameBundle, liveState: LiveGameStat
   </head>
   <body>
     <h1 style="font-size:18px;margin-bottom:0">${esc(bundle.awayTeam.name)} @ ${esc(bundle.homeTeam.name)}</h1>
-    <p style="color:#555;margin-top:4px">${esc(new Date(bundle.game.scheduled_at).toLocaleString())} · ${esc(bundle.game.court_label ?? "")}</p>
+    <p style="color:#555;margin-top:4px">${esc(formatPhTime(bundle.game.scheduled_at))} · ${esc(bundle.game.court_label ?? "")}</p>
 
     <table style="width:100%;border-collapse:collapse;margin-top:12px">
       <thead><tr><th style="${cellStyle(true)}">Team</th>${periodHeaderCells}<th style="${cellStyle(true)}">Final</th></tr></thead>

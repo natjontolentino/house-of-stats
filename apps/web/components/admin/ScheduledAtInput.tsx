@@ -1,37 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-
-function toLocalInputValue(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+import { useState } from "react";
+import { isoToPhLocal, phLocalToIso } from "../../lib/time";
 
 /**
- * The server runs in UTC, so a plain datetime-local value ("2026-09-26T11:30")
- * would be read as 11:30 UTC rather than the organizer's own 11:30. Converting
- * to an absolute ISO timestamp in the browser, which knows the local zone,
- * keeps the time the organizer typed. `defaultIso` prefills the field (in the
- * browser's zone) when editing an existing game.
+ * Date and time are always entered as Philippine time (UTC+8), whatever the
+ * browser's own time zone is, and saved as an absolute timestamp. `defaultIso`
+ * prefills the field when editing an existing game.
  */
 export function ScheduledAtInput({ name, defaultIso }: { name: string; defaultIso?: string }) {
   const [iso, setIso] = useState(defaultIso ?? "");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (defaultIso && inputRef.current) inputRef.current.value = toLocalInputValue(defaultIso);
-  }, [defaultIso]);
 
   return (
     <>
       <input
-        ref={inputRef}
         type="datetime-local"
         required
-        onChange={(e) => setIso(e.target.value ? new Date(e.target.value).toISOString() : "")}
+        defaultValue={defaultIso ? isoToPhLocal(defaultIso) : undefined}
+        onChange={(e) => setIso(e.target.value ? phLocalToIso(e.target.value) : "")}
         style={{ padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)" }}
       />
+      <span style={{ fontSize: 12, color: "var(--muted)" }}>Philippine time (UTC+8)</span>
       <input type="hidden" name={name} value={iso} />
     </>
   );

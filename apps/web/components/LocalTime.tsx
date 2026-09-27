@@ -1,6 +1,6 @@
-"use client";
+import { formatPhTime } from "../lib/time";
 
-/** Formats a timestamp in the viewer's own time zone. The server runs in UTC, so formatting there would show the wrong hour. */
+/** A timestamp in Philippine time (UTC+8). Formatted the same on the server and in every browser, so it never shifts with the viewer's time zone. */
 export function LocalTime({ iso }: { iso: string }) {
-  return <span suppressHydrationWarning>{new Date(iso).toLocaleString()}</span>;
+  return <span>{formatPhTime(iso)}</span>;
 }
