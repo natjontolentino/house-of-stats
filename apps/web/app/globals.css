@@ -701,3 +701,30 @@ tbody tr:hover {
   font-size: 12.5px;
   text-decoration: none;
 }
+
+/* --- Route loading state (app/loading.tsx) --- */
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: loading-slide 1s ease-in-out infinite;
+  z-index: 50;
+}
+.loading-block {
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius);
+  animation: loading-pulse 1.2s ease-in-out infinite;
+}
+@keyframes loading-slide {
+  from { background-position: -40% 0; }
+  to { background-position: 140% 0; }
+}
+@keyframes loading-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}

@@ -35,12 +35,16 @@ export async function fetchLiveGames(): Promise<LiveGameSummary[]> {
   const seasonIds = Array.from(new Set(games.map((g) => g.season_id)));
   const gameIds = games.map((g) => g.id);
 
-  const [{ data: teamRows }, { data: seasonRows }, { data: rosterRows }, { data: eventRows }] = await Promise.all([
+  // Plays are fetched per game: the database caps a single request at 1000 rows, which two live games together can exceed.
+  const [{ data: teamRows }, { data: seasonRows }, { data: rosterRows }, eventResults] = await Promise.all([
     supabase.from("team").select("*").in("id", teamIds),
     supabase.from("season").select("id, league_id").in("id", seasonIds),
     supabase.from("roster_entry").select("team_id, player_id").in("team_id", teamIds),
-    supabase.from("game_event").select("*").in("game_id", gameIds).order("sequence", { ascending: true }),
+    Promise.all(
+      gameIds.map((id) => supabase.from("game_event").select("*").eq("game_id", id).order("sequence", { ascending: true })),
+    ),
   ]);
+  const eventRows = eventResults.flatMap((r) => r.data ?? []);
 
   const teamsById = new Map(((teamRows ?? []) as Team[]).map((t) => [t.id, t]));
   const leagueIdBySeason = new Map((seasonRows ?? []).map((s) => [s.id, s.league_id as string]));

@@ -38,17 +38,16 @@ export async function fetchSeasonStats(seasonId: string): Promise<SeasonStatsRes
     return { players: [], teamStats: [], standings: [], playersById: {}, teamsById: {}, settings: resolveLeagueSettings(null) };
   }
 
-  const { data: league } = await supabase.from("league").select("*").eq("id", season.league_id).single();
+  // Independent lookups run together instead of one after another -- each one
+  // is a network round trip to the database.
+  const [{ data: league }, { data: games }, { data: teamRows }, { data: rosterEntries }] = await Promise.all([
+    supabase.from("league").select("*").eq("id", season.league_id).single(),
+    supabase.from("game").select("*").eq("season_id", seasonId).eq("status", "finalized"),
+    supabase.from("team").select("*").eq("season_id", seasonId),
+    supabase.from("roster_entry").select("*").eq("season_id", seasonId),
+  ]);
   const settings = resolveLeagueSettings(league?.settings);
-
-  const { data: games } = await supabase
-    .from("game")
-    .select("*")
-    .eq("season_id", seasonId)
-    .eq("status", "finalized");
   const finalizedGames = (games ?? []) as Game[];
-
-  const { data: teamRows } = await supabase.from("team").select("*").eq("season_id", seasonId);
   const teams = (teamRows ?? []) as Team[];
   const teamsById: Record<string, Team> = {};
   teams.forEach((t) => (teamsById[t.id] = t));
@@ -57,29 +56,28 @@ export async function fetchSeasonStats(seasonId: string): Promise<SeasonStatsRes
     return { players: [], teamStats: [], standings: [], playersById: {}, teamsById, settings };
   }
 
-  const teamIds = teams.map((t) => t.id);
-  const { data: rosterEntries } = await supabase.from("roster_entry").select("*").in("team_id", teamIds);
   const rosterByTeam: Record<string, string[]> = {};
   (rosterEntries ?? []).forEach((r) => {
     (rosterByTeam[r.team_id] ??= []).push(r.player_id);
   });
-
   const playerIds = Array.from(new Set((rosterEntries ?? []).map((r) => r.player_id)));
-  const { data: playerRows } = await supabase.from("player").select("*").in("id", playerIds);
+
+  // Plays are fetched one game at a time, in parallel: the database returns at
+  // most 1000 rows per request, which a whole season's plays would exceed and
+  // silently truncate.
+  const [{ data: playerRows }, eventResults] = await Promise.all([
+    supabase.from("player").select("*").in("id", playerIds),
+    Promise.all(
+      finalizedGames.map((g) =>
+        supabase.from("game_event").select("*").eq("game_id", g.id).order("sequence", { ascending: true }),
+      ),
+    ),
+  ]);
   const playersById: Record<string, Player> = {};
   (playerRows ?? []).forEach((p: Player) => (playersById[p.id] = p));
 
-  const gameIds = finalizedGames.map((g) => g.id);
-  const { data: allEvents } = await supabase
-    .from("game_event")
-    .select("*")
-    .in("game_id", gameIds)
-    .order("sequence", { ascending: true });
   const eventsByGame = new Map<string, GameEvent[]>();
-  ((allEvents ?? []) as GameEvent[]).forEach((e) => {
-    if (!eventsByGame.has(e.game_id)) eventsByGame.set(e.game_id, []);
-    eventsByGame.get(e.game_id)!.push(e);
-  });
+  finalizedGames.forEach((g, i) => eventsByGame.set(g.id, (eventResults[i].data ?? []) as GameEvent[]));
 
   const linesByPlayer = new Map<string, PlayerBoxLine[]>();
   const teamResults: Parameters<typeof computeStandings>[0] = [];
