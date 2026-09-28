@@ -108,13 +108,43 @@ export async function deleteLeagueAction(formData: FormData) {
   const { data: seasons } = await supabase.from("season").select("id").eq("league_id", leagueId);
   const seasonIds = (seasons ?? []).map((s) => s.id);
   const { data: teams } = seasonIds.length > 0 ? await supabase.from("team").select("id").in("season_id", seasonIds) : { data: [] };
+  const teamIds = (teams ?? []).map((t) => t.id);
+  const { data: games } = seasonIds.length > 0 ? await supabase.from("game").select("id").in("season_id", seasonIds) : { data: [] };
+  const gameIds = (games ?? []).map((g) => g.id);
 
   await deleteStorageLogo(supabase, "league-logos", leagueId);
-  await Promise.all((teams ?? []).map((t) => deleteStorageLogo(supabase, "team-logos", t.id)));
-  const { error: deleteError } = await supabase.from("league").delete().eq("id", leagueId);
-  if (deleteError) {
-    console.error("[delete-league] delete failed", deleteError.message);
-    return fail("db-error");
+  await Promise.all(teamIds.map((id) => deleteStorageLogo(supabase, "team-logos", id)));
+
+  // Deleted children-first, in the exact order their foreign keys require.
+  // `league`'s own cascade (0001_init.sql) handles season/team/player/roster_entry/
+  // venue/device fine on its own, but game_event/game_lineup/game reference
+  // player and team WITHOUT cascade, and since team and game both cascade
+  // independently from the same league/season row, Postgres does not
+  // guarantee it deletes game_event before player -- confirmed live: it
+  // tried to delete a player while a game_event row still pointed at them
+  // ("violates foreign key constraint game_event_player_id_fkey"). Deleting
+  // every level explicitly removes that ordering ambiguity entirely.
+  // .in(column, []) is skipped rather than sent -- an empty id list (a
+  // league with no games/teams yet) means "delete nothing", but some
+  // PostgREST versions treat an empty IN list as an error rather than a
+  // no-op match.
+  const steps: Array<[boolean, () => PromiseLike<{ error: { message: string } | null }>]> = [
+    [gameIds.length > 0, () => supabase.from("game_event").delete().in("game_id", gameIds)],
+    [gameIds.length > 0, () => supabase.from("game_lineup").delete().in("game_id", gameIds)],
+    [gameIds.length > 0, () => supabase.from("game").delete().in("id", gameIds)],
+    [seasonIds.length > 0, () => supabase.from("roster_entry").delete().in("season_id", seasonIds)],
+    [teamIds.length > 0, () => supabase.from("team").delete().in("id", teamIds)],
+    [true, () => supabase.from("player").delete().eq("league_id", leagueId)],
+    [true, () => supabase.from("season").delete().eq("league_id", leagueId)],
+    [true, () => supabase.from("league").delete().eq("id", leagueId)],
+  ];
+  for (const [shouldRun, step] of steps) {
+    if (!shouldRun) continue;
+    const { error: deleteError } = await step();
+    if (deleteError) {
+      console.error("[delete-league] delete failed", deleteError.message);
+      return fail("db-error");
+    }
   }
 
   revalidatePath("/admin");
