@@ -1,7 +1,8 @@
 import { createSupabaseAdminClient } from "../../../../lib/supabaseAdminClient";
 import { getAdminLeagueContext } from "../../../../lib/adminLeague";
-import { updateLeagueAction, setLeagueLoginCodeAction, updateClockSettingsAction } from "./actions";
+import { updateLeagueAction, setLeagueLoginCodeAction, updateClockSettingsAction, deleteLeagueAction } from "./actions";
 import { createLeagueAction } from "../leagueSwitchActions";
+import { DeleteLeagueForm } from "../../../../components/admin/DeleteLeagueForm";
 import { resolveLeagueSettings } from "@courtstats/shared";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ export default async function AdminLeaguePage() {
     .select("league_id")
     .eq("league_id", leagueId)
     .maybeSingle();
+  const { count: leagueCount } = await supabase.from("league").select("id", { count: "exact", head: true });
 
   return (
     <main className="page" style={{ maxWidth: 480 }}>
@@ -146,6 +148,18 @@ export default async function AdminLeaguePage() {
           Create league
         </button>
       </form>
+
+      <h2 className="section-title" style={{ marginTop: 28, color: "var(--red)" }}>
+        Danger zone
+      </h2>
+      {(leagueCount ?? 0) <= 1 ? (
+        <p className="card" style={{ padding: 16, color: "var(--muted)", fontSize: 13 }}>
+          This is the only league, so it can&apos;t be deleted — create another league first if you want to remove
+          this one.
+        </p>
+      ) : (
+        <DeleteLeagueForm leagueId={leagueId} leagueName={selected.name} action={deleteLeagueAction} />
+      )}
     </main>
   );
 }

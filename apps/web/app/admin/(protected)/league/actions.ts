@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createSupabaseAdminClient } from "../../../../lib/supabaseAdminClient";
 
 function extFromFile(file: File): string {
@@ -58,6 +59,64 @@ export async function updateClockSettingsAction(formData: FormData) {
   };
   await supabase.from("league").update({ settings }).eq("id", leagueId);
   revalidatePath("/admin/league");
+}
+
+/**
+ * Removes just this one league's or team's logo files from a shared folder
+ * (every league's/team's logos sit flatly in the same "league-logos" /
+ * "team-logos" folder, named "{id}-{timestamp}.ext") -- matching on the id
+ * prefix is required, since listing the whole folder would delete every
+ * other league's logos too. Best-effort: a failure here must never block
+ * the actual data delete.
+ */
+async function deleteStorageLogo(supabase: ReturnType<typeof createSupabaseAdminClient>, folder: string, id: string) {
+  try {
+    const { data: files } = await supabase.storage.from("league-assets").list(folder);
+    const matches = (files ?? []).filter((f) => f.name.startsWith(`${id}-`));
+    if (matches.length > 0) {
+      await supabase.storage.from("league-assets").remove(matches.map((f) => `${folder}/${f.name}`));
+    }
+  } catch {
+    // logo cleanup is a nicety; the delete itself must still proceed
+  }
+}
+
+/**
+ * Permanently deletes a league and everything under it (seasons, teams,
+ * players, rosters, games, events, the mobile login code and paired
+ * devices) -- every one of those tables has `on delete cascade` back to
+ * `league` (0001_init.sql / 0004-0005), so removing the league row is
+ * enough at the database level. Uploaded logo files are not part of that
+ * cascade (they live in storage, not Postgres), so they're removed here
+ * explicitly. Confirmation is the exact league name, checked server-side
+ * too -- a client-only check would just be UI decoration.
+ */
+export async function deleteLeagueAction(formData: FormData) {
+  const leagueId = formData.get("leagueId");
+  const confirmName = formData.get("confirmName");
+  if (typeof leagueId !== "string" || typeof confirmName !== "string") return;
+
+  const supabase = createSupabaseAdminClient();
+  const { data: league } = await supabase.from("league").select("name").eq("id", leagueId).single();
+  if (!league || confirmName.trim() !== league.name) return;
+
+  const { count } = await supabase.from("league").select("id", { count: "exact", head: true });
+  if ((count ?? 0) <= 1) return; // at least one league must always exist for the admin to have somewhere to land
+
+  const { data: seasons } = await supabase.from("season").select("id").eq("league_id", leagueId);
+  const seasonIds = (seasons ?? []).map((s) => s.id);
+  const { data: teams } = seasonIds.length > 0 ? await supabase.from("team").select("id").in("season_id", seasonIds) : { data: [] };
+
+  await deleteStorageLogo(supabase, "league-logos", leagueId);
+  await Promise.all((teams ?? []).map((t) => deleteStorageLogo(supabase, "team-logos", t.id)));
+  await supabase.from("league").delete().eq("id", leagueId);
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/league");
+  revalidatePath("/");
+  revalidatePath("/standings");
+  revalidatePath("/schedule");
+  redirect("/admin/league");
 }
 
 export async function setLeagueLoginCodeAction(formData: FormData) {
