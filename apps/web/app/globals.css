@@ -319,7 +319,7 @@ tbody tr:hover {
   overflow: hidden;
 }
 
-.hero__court {
+.hero__balls {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -333,13 +333,13 @@ tbody tr:hover {
   position: relative;
 }
 
-/* Live now — same court-line texture as the hero, tuned down for a light background instead of the hero's dark one. */
+/* Live now — same scattered-basketballs texture as the hero, tuned down for a light background instead of the hero's dark one. */
 .live-band {
   position: relative;
   overflow: hidden;
 }
 
-.live-court {
+.live-balls {
   position: absolute;
   inset: 0;
   width: 100%;
