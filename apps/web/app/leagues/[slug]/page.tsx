@@ -50,39 +50,59 @@ export default async function LeaguePage({ params }: { params: { slug: string } 
         )}
       </div>
 
-      <h2 className="section-title">Games</h2>
-      {games.length === 0 ? (
-        <p className="card" style={{ padding: 16, color: "var(--muted)", marginBottom: 28 }}>
-          No games scheduled yet.
-        </p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
-          {games.map((g) => {
-            const badge = statusBadge(g.status);
-            return (
-              <Link
-                key={g.id}
-                href={`/games/${g.id}`}
-                className="card"
-                style={{ padding: 12, display: "flex", justifyContent: "space-between", alignItems: "center", textDecoration: "none", color: "var(--text)" }}
-              >
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>
-                    {teamsById[g.away_team_id]?.name ?? "?"} @ {teamsById[g.home_team_id]?.name ?? "?"}
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                    <LocalTime iso={g.scheduled_at} /> {g.court_label ? `· ${g.court_label}` : ""}
-                  </div>
+      {(() => {
+        const upcoming = games.filter((g) => g.status !== "finalized");
+        const results = games.filter((g) => g.status === "finalized").reverse();
+        const GameRow = (g: (typeof games)[number]) => {
+          const badge = statusBadge(g.status);
+          return (
+            <Link
+              key={g.id}
+              href={`/games/${g.id}`}
+              className="card"
+              style={{ padding: 12, display: "flex", justifyContent: "space-between", alignItems: "center", textDecoration: "none", color: "var(--text)" }}
+            >
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>
+                  {teamsById[g.away_team_id]?.name ?? "?"} @ {teamsById[g.home_team_id]?.name ?? "?"}
                 </div>
-                <span className={badge.className}>{badge.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      )}
+                <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                  <LocalTime iso={g.scheduled_at} /> {g.court_label ? `· ${g.court_label}` : ""}
+                </div>
+              </div>
+              <span className={badge.className}>{badge.label}</span>
+            </Link>
+          );
+        };
+        return (
+          <>
+            <h2 className="section-title">Upcoming</h2>
+            {upcoming.length === 0 ? (
+              <p className="card" style={{ padding: 16, color: "var(--muted)", marginBottom: 28 }}>
+                No games scheduled yet.
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
+                {upcoming.map(GameRow)}
+              </div>
+            )}
+
+            <h2 className="section-title">Results</h2>
+            {results.length === 0 ? (
+              <p className="card" style={{ padding: 16, color: "var(--muted)", marginBottom: 28 }}>
+                No finished games yet.
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
+                {results.map(GameRow)}
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       <p style={{ margin: "0 0 20px" }}>
-        <Link href={`/leagues/${league.slug}/stats`} className="button-secondary">
+        <Link href={`/leagues/${league.slug}/stats`} className="button-secondary" style={{ textDecoration: "none" }}>
           Season stats — full player and team averages
         </Link>
       </p>

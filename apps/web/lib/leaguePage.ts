@@ -24,7 +24,7 @@ export async function fetchLeagueBySlug(slug: string) {
 
   const [{ data: teams }, { data: games }, stats] = await Promise.all([
     supabase.from("team").select("*").eq("season_id", season.id).order("name"),
-    supabase.from("game").select("*").eq("season_id", season.id).order("scheduled_at", { ascending: false }).limit(30),
+    supabase.from("game").select("*").eq("season_id", season.id).order("scheduled_at", { ascending: true }).limit(30),
     fetchSeasonStats(season.id),
   ]);
 
