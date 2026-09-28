@@ -7,7 +7,19 @@ import { resolveLeagueSettings } from "@courtstats/shared";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminLeaguePage() {
+const DELETE_ERROR_MESSAGES: Record<string, string> = {
+  mismatch: "That didn't match the league's name exactly (check for extra spaces or a different league selected) — nothing was deleted.",
+  "last-league": "This is the only league, so it can't be deleted.",
+  "not-found": "That league no longer exists.",
+  "db-error": "The server couldn't delete that league. Please try again.",
+  "bad-request": "That request was missing information. Please try again.",
+};
+
+export default async function AdminLeaguePage({
+  searchParams,
+}: {
+  searchParams: { deleteError?: string; deleted?: string };
+}) {
   const supabase = createSupabaseAdminClient();
   const { league: selected } = await getAdminLeagueContext();
   const leagueId = selected.id;
@@ -152,6 +164,16 @@ export default async function AdminLeaguePage() {
       <h2 className="section-title" style={{ marginTop: 28, color: "var(--red)" }}>
         Danger zone
       </h2>
+      {searchParams.deleted && (
+        <p className="card" style={{ padding: 16, color: "var(--green)", fontSize: 13, marginBottom: 12 }}>
+          &quot;{searchParams.deleted}&quot; was deleted.
+        </p>
+      )}
+      {searchParams.deleteError && (
+        <p className="card" style={{ padding: 16, color: "var(--red)", fontSize: 13, marginBottom: 12 }}>
+          {DELETE_ERROR_MESSAGES[searchParams.deleteError] ?? "That didn't work. Please try again."}
+        </p>
+      )}
       {(leagueCount ?? 0) <= 1 ? (
         <p className="card" style={{ padding: 16, color: "var(--muted)", fontSize: 13 }}>
           This is the only league, so it can&apos;t be deleted — create another league first if you want to remove

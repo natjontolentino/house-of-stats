@@ -94,14 +94,16 @@ async function deleteStorageLogo(supabase: ReturnType<typeof createSupabaseAdmin
 export async function deleteLeagueAction(formData: FormData) {
   const leagueId = formData.get("leagueId");
   const confirmName = formData.get("confirmName");
-  if (typeof leagueId !== "string" || typeof confirmName !== "string") return;
+  const fail = (reason: string) => redirect(`/admin/league?deleteError=${reason}`);
+  if (typeof leagueId !== "string" || typeof confirmName !== "string") return fail("bad-request");
 
   const supabase = createSupabaseAdminClient();
   const { data: league } = await supabase.from("league").select("name").eq("id", leagueId).single();
-  if (!league || confirmName.trim() !== league.name) return;
+  if (!league) return fail("not-found");
+  if (confirmName.trim() !== league.name) return fail("mismatch");
 
   const { count } = await supabase.from("league").select("id", { count: "exact", head: true });
-  if ((count ?? 0) <= 1) return; // at least one league must always exist for the admin to have somewhere to land
+  if ((count ?? 0) <= 1) return fail("last-league"); // at least one league must always exist for the admin to have somewhere to land
 
   const { data: seasons } = await supabase.from("season").select("id").eq("league_id", leagueId);
   const seasonIds = (seasons ?? []).map((s) => s.id);
@@ -109,14 +111,18 @@ export async function deleteLeagueAction(formData: FormData) {
 
   await deleteStorageLogo(supabase, "league-logos", leagueId);
   await Promise.all((teams ?? []).map((t) => deleteStorageLogo(supabase, "team-logos", t.id)));
-  await supabase.from("league").delete().eq("id", leagueId);
+  const { error: deleteError } = await supabase.from("league").delete().eq("id", leagueId);
+  if (deleteError) {
+    console.error("[delete-league] delete failed", deleteError.message);
+    return fail("db-error");
+  }
 
   revalidatePath("/admin");
   revalidatePath("/admin/league");
   revalidatePath("/");
   revalidatePath("/standings");
   revalidatePath("/schedule");
-  redirect("/admin/league");
+  redirect(`/admin/league?deleted=${encodeURIComponent(league.name)}`);
 }
 
 export async function setLeagueLoginCodeAction(formData: FormData) {

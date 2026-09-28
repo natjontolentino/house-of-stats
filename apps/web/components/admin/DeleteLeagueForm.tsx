@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 
-/** Requires typing the league's exact name before the delete button will even submit -- this is permanent, so a plain confirm() dialog isn't enough friction. */
+/**
+ * Requires typing the league's exact name before the delete button will even
+ * enable -- that's the confirmation step. (An earlier version also asked for
+ * a window.confirm() popup on top of this; dropped because some browsers
+ * block or silently auto-dismiss JS confirm dialogs, which made the button
+ * appear to do nothing when clicked.)
+ */
 export function DeleteLeagueForm({
   leagueId,
   leagueName,
@@ -18,11 +24,6 @@ export function DeleteLeagueForm({
   return (
     <form
       action={action}
-      onSubmit={(e) => {
-        if (!matches || !window.confirm(`Permanently delete "${leagueName}"? Every team, player, game and stat in it will be gone for good.`)) {
-          e.preventDefault();
-        }
-      }}
       className="card"
       style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12, border: "1px solid var(--red)" }}
     >
