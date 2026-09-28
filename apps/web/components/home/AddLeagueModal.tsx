@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { submitLeagueLeadAction } from "../../app/actions/leagueLead";
 
 const ADMIN_EMAIL = "natjon.tolentino@gmail.com";
 
@@ -15,13 +16,14 @@ function buildMessage(leagueName: string, contactName: string, contactNumber: st
   return { subject, body };
 }
 
+type SendState = "idle" | "sending" | "sent" | "failed";
+
 /**
- * Replaces the old dead "Add your league" link: a small popup that collects
- * just enough to reach the site owner, rather than a self-serve signup flow
- * that doesn't exist yet. The mailto button does nothing visible on a
- * machine with no default mail app configured (no error, just silence), so
- * "Copy details" is a fallback that always works -- paste into whatever
- * email or messaging app is actually open.
+ * Replaces the old dead "Add your league" link. Submitting records the
+ * inquiry in league_lead (visible in the admin under Leads) and emails the
+ * site owner -- see app/actions/leagueLead.ts. The mailto/copy/manual-text
+ * options below stay as a fallback for whenever that fails or isn't
+ * configured yet, since none of them depend on the server action working.
  */
 export function AddLeagueModal() {
   const [open, setOpen] = useState(false);
@@ -29,6 +31,7 @@ export function AddLeagueModal() {
   const [contactName, setContactName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [copied, setCopied] = useState(false);
+  const [sendState, setSendState] = useState<SendState>("idle");
 
   const { subject, body } = buildMessage(leagueName, contactName, contactNumber);
   const mailtoHref = `mailto:${ADMIN_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -39,9 +42,22 @@ export function AddLeagueModal() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard access can be denied by the browser; the mailto button and the plain email text below still work.
+      // Clipboard access can be denied by the browser; the fallback text below still works.
     }
   };
+
+  const submit = async () => {
+    if (!leagueName.trim() || !contactName.trim()) return;
+    setSendState("sending");
+    try {
+      const result = await submitLeagueLeadAction({ leagueName, contactName, contactNumber });
+      setSendState(result.ok ? "sent" : "failed");
+    } catch {
+      setSendState("failed");
+    }
+  };
+
+  const canSubmit = leagueName.trim().length > 0 && contactName.trim().length > 0;
 
   return (
     <>
@@ -93,72 +109,91 @@ export function AddLeagueModal() {
                 ×
               </button>
             </div>
-            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>
-              Tell us a couple of details, then reach out — we&apos;ll set your league up.
-            </p>
-            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>League name</span>
-              <input
-                type="text"
-                value={leagueName}
-                onChange={(e) => setLeagueName(e.target.value)}
-                style={{ padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)" }}
-              />
-            </label>
-            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>Contact person</span>
-              <input
-                type="text"
-                value={contactName}
-                onChange={(e) => setContactName(e.target.value)}
-                style={{ padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)" }}
-              />
-            </label>
-            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>Contact number</span>
-              <input
-                type="tel"
-                value={contactNumber}
-                onChange={(e) => setContactNumber(e.target.value)}
-                style={{ padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)" }}
-              />
-            </label>
 
-            <a href={mailtoHref} className="button-primary" style={{ textAlign: "center", textDecoration: "none" }}>
-              Email {ADMIN_EMAIL}
-            </a>
-            <p style={{ fontSize: 11, color: "var(--muted-light)", margin: "-6px 0 0", textAlign: "center" }}>
-              Only works if this device has an email app set up to handle it.
-            </p>
+            {sendState === "sent" ? (
+              <>
+                <p style={{ fontSize: 14, margin: 0 }}>Thanks — we&apos;ve got it and will be in touch.</p>
+                <button type="button" onClick={() => setOpen(false)} className="button-primary" style={{ textAlign: "center" }}>
+                  Close
+                </button>
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>
+                  Tell us a couple of details and send — we&apos;ll set your league up.
+                </p>
+                <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>League name</span>
+                  <input
+                    type="text"
+                    value={leagueName}
+                    onChange={(e) => setLeagueName(e.target.value)}
+                    style={{ padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)" }}
+                  />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Contact person</span>
+                  <input
+                    type="text"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    style={{ padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)" }}
+                  />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Contact number</span>
+                  <input
+                    type="tel"
+                    value={contactNumber}
+                    onChange={(e) => setContactNumber(e.target.value)}
+                    style={{ padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)" }}
+                  />
+                </label>
 
-            <button
-              type="button"
-              onClick={copyDetails}
-              className="button-secondary"
-              style={{ textAlign: "center" }}
-            >
-              {copied ? "Copied!" : "Copy details instead"}
-            </button>
-            <p style={{ fontSize: 12, color: "var(--muted)", margin: 0, textAlign: "center" }}>
-              Or select the text below yourself (tap it, then Select all, then Copy) and send it to{" "}
-              <strong style={{ color: "var(--text)" }}>{ADMIN_EMAIL}</strong> however you like.
-            </p>
-            <textarea
-              readOnly
-              value={`To: ${ADMIN_EMAIL}\nSubject: ${subject}\n\n${body}`}
-              onFocus={(e) => e.currentTarget.select()}
-              rows={5}
-              style={{
-                padding: "10px 12px",
-                borderRadius: "var(--radius-sm)",
-                border: "1px solid var(--border-strong)",
-                fontFamily: "inherit",
-                fontSize: 12,
-                color: "var(--muted)",
-                resize: "vertical",
-                background: "var(--bg)",
-              }}
-            />
+                <button
+                  type="button"
+                  onClick={submit}
+                  disabled={!canSubmit || sendState === "sending"}
+                  className="button-primary"
+                  style={{ textAlign: "center", opacity: !canSubmit || sendState === "sending" ? 0.6 : 1 }}
+                >
+                  {sendState === "sending" ? "Sending…" : "Send inquiry"}
+                </button>
+                {sendState === "failed" && (
+                  <p style={{ fontSize: 12, color: "var(--red)", margin: 0, textAlign: "center" }}>
+                    That didn&apos;t go through. Use one of the options below instead.
+                  </p>
+                )}
+
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                  <p style={{ fontSize: 12, color: "var(--muted)", margin: 0, textAlign: "center" }}>
+                    Or reach out directly:
+                  </p>
+                  <a href={mailtoHref} className="button-secondary" style={{ textAlign: "center", textDecoration: "none" }}>
+                    Email {ADMIN_EMAIL}
+                  </a>
+                  <button type="button" onClick={copyDetails} className="button-secondary" style={{ textAlign: "center" }}>
+                    {copied ? "Copied!" : "Copy details instead"}
+                  </button>
+                  <textarea
+                    readOnly
+                    value={`To: ${ADMIN_EMAIL}\nSubject: ${subject}\n\n${body}`}
+                    onFocus={(e) => e.currentTarget.select()}
+                    rows={4}
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: "var(--radius-sm)",
+                      border: "1px solid var(--border-strong)",
+                      fontFamily: "inherit",
+                      fontSize: 12,
+                      color: "var(--muted)",
+                      resize: "vertical",
+                      background: "var(--bg)",
+                    }}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

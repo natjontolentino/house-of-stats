@@ -29,6 +29,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/admin/games" style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>
               Games
             </Link>
+            <Link href="/admin/leads" style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>
+              Leads
+            </Link>
           </nav>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <LeagueSwitcher leagues={ctx.leagues} currentId={ctx.league.id} action={selectLeagueAction} />
