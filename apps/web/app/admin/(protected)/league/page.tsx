@@ -1,7 +1,6 @@
 import { createSupabaseAdminClient } from "../../../../lib/supabaseAdminClient";
 import { getAdminLeagueContext } from "../../../../lib/adminLeague";
 import { updateLeagueAction, setLeagueLoginCodeAction, updateClockSettingsAction, deleteLeagueAction } from "./actions";
-import { createLeagueAction } from "../leagueSwitchActions";
 import { DeleteLeagueForm } from "../../../../components/admin/DeleteLeagueForm";
 import { resolveLeagueSettings } from "@courtstats/shared";
 
@@ -137,27 +136,6 @@ export default async function AdminLeaguePage({
         </label>
         <button type="submit" className="button-primary" style={{ alignSelf: "flex-start" }}>
           {credential ? "Update code" : "Set code"}
-        </button>
-      </form>
-
-      <h2 className="section-title" style={{ marginTop: 28 }}>
-        Add another league
-      </h2>
-      <form action={createLeagueAction} className="card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
-        <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>
-          Creates a new league with a first season and switches the admin to it. Then add its logo, teams, and a mobile login code.
-        </p>
-        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>New league name</span>
-          <input
-            type="text"
-            name="name"
-            required
-            style={{ padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)" }}
-          />
-        </label>
-        <button type="submit" className="button-primary" style={{ alignSelf: "flex-start" }}>
-          Create league
         </button>
       </form>
 
