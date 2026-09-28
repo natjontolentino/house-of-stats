@@ -11,6 +11,15 @@ import { computeSessionToken, COOKIE_NAME } from "../../../../../lib/adminSessio
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/** Logging-only, non-verifying decode -- used purely to print why verification failed. */
+function decodeClaimsForLogging(idToken: string): unknown {
+  try {
+    return JSON.parse(Buffer.from(idToken.split(".")[1], "base64url").toString("utf8"));
+  } catch {
+    return "unparseable";
+  }
+}
+
 /** Finishes Google sign-in: only the one allowed, verified Google account gets an admin session. */
 export async function GET(req: NextRequest) {
   const origin = req.nextUrl.origin;
@@ -41,12 +50,21 @@ export async function GET(req: NextRequest) {
     }),
     cache: "no-store",
   });
-  if (!tokenRes.ok) return fail("google");
+  if (!tokenRes.ok) {
+    console.error("[admin-google] token exchange failed", tokenRes.status, await tokenRes.text());
+    return fail("google");
+  }
   const { id_token: idToken } = (await tokenRes.json()) as { id_token?: string };
-  if (!idToken) return fail("google");
+  if (!idToken) {
+    console.error("[admin-google] token response had no id_token");
+    return fail("google");
+  }
 
   const claims = readVerifiedClaims(idToken, nonce);
-  if (!claims) return fail("google");
+  if (!claims) {
+    console.error("[admin-google] claims failed verification", JSON.stringify(decodeClaimsForLogging(idToken)));
+    return fail("google");
+  }
   if (claims.email_verified !== true || claims.email?.toLowerCase() !== allowedAdminEmail()) {
     return fail("account");
   }
