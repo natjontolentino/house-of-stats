@@ -10,8 +10,9 @@ export default async function AdminDashboard() {
   return (
     <main className="page">
       <h1 style={{ fontSize: 24, margin: "4px 0 20px" }}>Admin</h1>
-      <p style={{ fontSize: 13, color: "var(--muted)", margin: "-14px 0 20px" }}>
-        Managing <strong>{league.name}</strong> — switch leagues from the dropdown above.
+      <p style={{ fontSize: 16, color: "var(--muted)", margin: "-10px 0 20px" }}>
+        Managing <strong style={{ fontWeight: 800, color: "var(--text)" }}>{league.name}</strong> — switch leagues
+        from the dropdown above.
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginBottom: 28 }}>
         <Link href="/admin/league" className="card" style={{ padding: 18, textDecoration: "none", color: "var(--text)" }}>
