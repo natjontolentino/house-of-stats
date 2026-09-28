@@ -1,10 +1,10 @@
-import { BasketballBackground } from "./BasketballBackground";
+import { CourtBackground } from "./CourtBackground";
 
 /** Placeholder search UI for now — not wired to real search yet (landing page redesign, placeholder-first pass). */
 export function HeroSection({ liveCount }: { liveCount: number }) {
   return (
     <section className="hero">
-      <BasketballBackground className="hero__balls" />
+      <CourtBackground className="hero__court" />
       <div className="wide-page">
         <p className="hero__eyebrow">Live from the scorer&apos;s table</p>
         <h1 className="hero__title">Your league&apos;s stats, while the game is still on.</h1>
