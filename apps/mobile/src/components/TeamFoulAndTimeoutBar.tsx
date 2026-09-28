@@ -130,6 +130,10 @@ export function TeamFoulAndTimeoutBar({
     <View style={[styles.container, align === "right" && styles.containerReverse]}>
       <FoulBox period={liveState.currentPeriod} count={teamState.teamFoulCount} status={teamState.penaltyStatus} />
 
+      <Pressable style={styles.subFiveButton} onPress={() => engine.startBulkSubstitution(teamId)}>
+        <Text style={styles.subFiveButtonText}>Sub 5</Text>
+      </Pressable>
+
       <View style={styles.timeoutBlock}>
         <Text style={[styles.teamLabel, align === "right" && { textAlign: "right" }]} numberOfLines={1}>
           {teamName}
@@ -163,6 +167,8 @@ export function TeamFoulAndTimeoutBar({
 const styles = StyleSheet.create({
   container: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 },
   containerReverse: { flexDirection: "row-reverse" },
+  subFiveButton: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: "#1a1a2e" },
+  subFiveButtonText: { color: "white", fontWeight: "700", fontSize: 11 },
   timeoutBlock: { flex: 1 },
   teamLabel: { fontSize: 11, fontWeight: "700", color: "#888", marginBottom: 4, textTransform: "uppercase" },
   timeoutRow: { flexDirection: "row", alignItems: "center", gap: 4 },
@@ -203,6 +209,9 @@ export function CompactTeamFoulAndTimeoutBar({
       <Text style={[compactStyles.foulText, { color, fontFamily: gridFont(true) }]}>
         Period {liveState.currentPeriod} · {teamState.teamFoulCount} {caption}
       </Text>
+      <Pressable style={styles.subFiveButton} onPress={() => engine.startBulkSubstitution(teamId)}>
+        <Text style={styles.subFiveButtonText}>Sub 5</Text>
+      </Pressable>
       <View style={compactStyles.timeoutRow}>
         {teamState.timeoutBoxes.map((box, i) => (
           <View key={box.slot_index} style={styles.timeoutSlot}>

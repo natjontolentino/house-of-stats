@@ -118,6 +118,54 @@ export function PromptOverlay({ engine }: { engine: GameEngine }) {
     );
   }
 
+  if (prompt.kind === "bulk_substitution") {
+    const total = prompt.outgoingPlayerIds.length;
+    const ready = prompt.chosenIn.length === total;
+    const capped = prompt.chosenIn.length >= total;
+    return (
+      <View style={[styles.overlayBar, styles.promptBar]}>
+        <Text style={styles.promptText}>
+          Substituting all {total} players — pick {total} incoming ({prompt.chosenIn.length}/{total})
+        </Text>
+        <View style={styles.optionsRow}>
+          {prompt.benchOptions.map((opt) => {
+            const selected = prompt.chosenIn.includes(opt.playerId);
+            const disabled = !selected && capped;
+            return (
+              <Pressable
+                key={opt.playerId}
+                disabled={disabled}
+                style={[
+                  styles.optionButton,
+                  selected && styles.optionButtonSelected,
+                  disabled && styles.optionButtonDisabled,
+                ]}
+                onPress={() => engine.toggleBulkSubCandidate(opt.playerId)}
+              >
+                <Text style={styles.optionButtonText}>
+                  #{opt.jersey} {opt.name}
+                  {selected ? " ✓" : ""}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <View style={styles.optionsRow}>
+          <Pressable
+            disabled={!ready}
+            style={[styles.smallButton, ready ? styles.confirmButton : styles.confirmButtonDisabled]}
+            onPress={engine.confirmBulkSubstitution}
+          >
+            <Text style={[styles.smallButtonText, ready && styles.confirmButtonText]}>Confirm swap</Text>
+          </Pressable>
+          <Pressable style={[styles.smallButton, styles.cancelButton]} onPress={engine.cancelPrompt}>
+            <Text style={styles.smallButtonText}>Cancel</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
   return null;
 }
 
@@ -149,8 +197,13 @@ const styles = StyleSheet.create({
   promptText: { color: "#7a4a00", fontWeight: "600", marginBottom: 6 },
   optionsRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   optionButton: { backgroundColor: "#1a1a2e", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
+  optionButtonSelected: { backgroundColor: "#1a8f4c" },
+  optionButtonDisabled: { opacity: 0.35 },
   optionButtonText: { color: "white", fontWeight: "600", fontSize: 12 },
   smallButton: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: "#ddd" },
   cancelButton: { backgroundColor: "#eee" },
+  confirmButton: { backgroundColor: "#1a8f4c" },
+  confirmButtonDisabled: { backgroundColor: "#ddd", opacity: 0.6 },
+  confirmButtonText: { color: "white" },
   smallButtonText: { fontWeight: "600", fontSize: 12, color: "#333" },
 });

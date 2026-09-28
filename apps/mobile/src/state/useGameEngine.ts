@@ -487,6 +487,75 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
 
   const cancelPrompt = useCallback(() => setPrompt({ kind: "none" }), []);
 
+  /**
+   * "Sub 5": opens a picker for the entire incoming lineup. Snapshots the
+   * team's current on-court players as the outgoing set — every one of them
+   * goes out, paired index-for-index with whichever bench players get chosen.
+   */
+  const startBulkSubstitution = useCallback(
+    (teamId: string) => {
+      if (!liveState) return;
+      const teamState = teamId === game.home_team_id ? liveState.home : liveState.away;
+      const benchOptions = teamState.benchPlayerIds
+        .filter((id) => !teamState.disqualifiedPlayerIds.includes(id))
+        .map((id) => ({
+          playerId: id,
+          name: (bundle.players[id] as { nickname: string })?.nickname ?? "?",
+          jersey: bundle.jerseyByPlayer[id] ?? "?",
+        }));
+      setPrompt({
+        kind: "bulk_substitution",
+        teamId,
+        outgoingPlayerIds: [...teamState.onCourtPlayerIds],
+        benchOptions,
+        chosenIn: [],
+      });
+    },
+    [liveState, game.home_team_id, bundle.players, bundle.jerseyByPlayer],
+  );
+
+  /** Toggles one bench player in/out of the incoming five, capped at the outgoing count. */
+  const toggleBulkSubCandidate = useCallback((playerId: string) => {
+    setPrompt((prev) => {
+      if (prev.kind !== "bulk_substitution") return prev;
+      if (prev.chosenIn.includes(playerId)) {
+        return { ...prev, chosenIn: prev.chosenIn.filter((id) => id !== playerId) };
+      }
+      if (prev.chosenIn.length >= prev.outgoingPlayerIds.length) return prev;
+      return { ...prev, chosenIn: [...prev.chosenIn, playerId] };
+    });
+  }, []);
+
+  /**
+   * Emits the whole swap as N individual `substitution` events (never a
+   * mid-game `lineup_set` — clock.ts only ever closes an on-court stint via
+   * a substitution's player_out match or a period_end, so a lineup_set here
+   * would silently leak the outgoing players' minutes). The outgoing and
+   * incoming sets are always disjoint (outgoing = the pre-swap on-court
+   * snapshot, incoming = bench players chosen from that same snapshot), so
+   * validating every pair against that one fixed snapshot is safe even
+   * though liveState won't reflect earlier pairs in this batch yet.
+   */
+  const confirmBulkSubstitution = useCallback(async () => {
+    if (prompt.kind !== "bulk_substitution") return;
+    const { teamId, outgoingPlayerIds, chosenIn } = prompt;
+    if (chosenIn.length !== outgoingPlayerIds.length) return;
+    const teamState = teamId === game.home_team_id ? liveState?.home : liveState?.away;
+    if (!teamState) return;
+    for (let i = 0; i < outgoingPlayerIds.length; i++) {
+      const result = validateSubstitution(outgoingPlayerIds, outgoingPlayerIds[i], chosenIn[i], teamState.disqualifiedPlayerIds);
+      if (!result.valid) {
+        setPrompt({ kind: "message", text: SUBSTITUTION_REJECTION_MESSAGES[result.reason!] });
+        return;
+      }
+    }
+    setPrompt({ kind: "none" });
+    for (let i = 0; i < outgoingPlayerIds.length; i++) {
+      await appendEvent("substitution", teamId, null, { player_in: chosenIn[i], player_out: outgoingPlayerIds[i] });
+    }
+    haptic("tap");
+  }, [prompt, liveState, game.home_team_id, appendEvent, haptic]);
+
   // --- undo (spec 6.12): reverses the most recent action of any kind ---
   const undo = useCallback(async () => {
     const visible = filterVoidedEvents(events).filter((e) => e.event_type !== "game_finalized");
@@ -642,6 +711,9 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
     tapPlayerName,
     resolveImplicitSubstitution,
     resolveDisqualification,
+    startBulkSubstitution,
+    toggleBulkSubCandidate,
+    confirmBulkSubstitution,
     cancelPrompt,
     setPrompt,
     undo,
