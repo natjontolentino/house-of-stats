@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { LeagueSummary } from "../../lib/leagueSummary";
+import { AddLeagueModal } from "./AddLeagueModal";
 
 function initials(name: string): string {
   const words = name.trim().split(/\s+/);
@@ -49,15 +50,7 @@ export function LeaguesSection({ leagues }: { leagues: LeagueSummary[] }) {
             );
           })}
 
-          <a href="#" className="league-card league-card--add">
-            <div className="league-card__plus">+</div>
-            <div className="league-card__body">
-              <p className="league-card__name" style={{ color: "var(--accent-dark)" }}>
-                Add your league
-              </p>
-              <p className="league-card__meta">One season, one price</p>
-            </div>
-          </a>
+          <AddLeagueModal />
         </div>
       </div>
     </section>

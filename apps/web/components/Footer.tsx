@@ -11,9 +11,9 @@ export function Footer() {
         </div>
         <nav className="site-footer__nav">
           <Link href="/">Live</Link>
-          <Link href="#leagues">Leagues</Link>
-          <Link href="#">For organizers</Link>
-          <Link href="#">Contact</Link>
+          <Link href="/#leagues">Leagues</Link>
+          <a href="mailto:natjon.tolentino@gmail.com?subject=I'd like to add my league">For organizers</a>
+          <a href="mailto:natjon.tolentino@gmail.com">Contact</a>
         </nav>
       </div>
     </footer>
