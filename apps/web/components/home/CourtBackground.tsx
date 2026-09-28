@@ -1,8 +1,8 @@
-/** Decorative full-court line drawing behind the hero — pure SVG, no image asset, so it stays crisp and lightweight at any size. Purely visual: aria-hidden and absolutely positioned behind the hero's text. */
-export function CourtBackground() {
+/** Decorative full-court line drawing used as a background texture — pure SVG, no image asset, so it stays crisp and lightweight at any size. Purely visual: aria-hidden and absolutely positioned behind a section's real content. The caller supplies the class that sets color/opacity/positioning for its own background (dark vs. light section). */
+export function CourtBackground({ className = "hero__court" }: { className?: string }) {
   return (
     <svg
-      className="hero__court"
+      className={className}
       viewBox="0 0 1000 500"
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"

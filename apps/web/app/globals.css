@@ -333,6 +333,26 @@ tbody tr:hover {
   position: relative;
 }
 
+/* Live now — same court-line texture as the hero, tuned down for a light background instead of the hero's dark one. */
+.live-band {
+  position: relative;
+  overflow: hidden;
+}
+
+.live-court {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--navy);
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+.live-band > .wide-page {
+  position: relative;
+}
+
 .hero__eyebrow {
   color: var(--muted-light);
   font-size: 12px;

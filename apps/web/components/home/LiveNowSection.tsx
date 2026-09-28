@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { LiveGameSummary } from "../../lib/liveGames";
+import { CourtBackground } from "./CourtBackground";
 
 function updatedAgo(date: Date | null): string {
   if (!date) return "no updates yet";
@@ -10,13 +11,14 @@ function updatedAgo(date: Date | null): string {
 
 export function LiveNowSection({ games }: { games: LiveGameSummary[] }) {
   return (
-    <section id="live" className="section-band">
+    <section id="live" className="section-band live-band">
+      <CourtBackground className="live-court" />
       <div className="wide-page">
         <div className="section-band__head">
           <h2 className="section-band__title">Live now</h2>
-          <a href="#" className="section-band__link">
+          <Link href="/schedule" className="section-band__link">
             All games and schedule →
-          </a>
+          </Link>
         </div>
 
         {games.length === 0 ? (
