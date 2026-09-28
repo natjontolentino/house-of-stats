@@ -31,6 +31,14 @@ export default async function AdminDashboard() {
           <div style={{ fontWeight: 700, marginBottom: 4 }}>Leads</div>
           <div style={{ fontSize: 13, color: "var(--muted)" }}>Inquiries from the public site</div>
         </Link>
+        <Link
+          href={`/leagues/${league.slug}/stats`}
+          className="card"
+          style={{ padding: 18, textDecoration: "none", color: "var(--text)" }}
+        >
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>Season stats</div>
+          <div style={{ fontSize: 13, color: "var(--muted)" }}>Standings and player/team averages (public page)</div>
+        </Link>
       </div>
 
       <h2 className="section-title">Add another league</h2>

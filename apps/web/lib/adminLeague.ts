@@ -11,7 +11,7 @@ export interface AdminLeagueOption {
 
 export interface AdminLeagueContext {
   leagues: AdminLeagueOption[];
-  league: { id: string; name: string; logo_url: string | null };
+  league: { id: string; name: string; slug: string; logo_url: string | null };
   /** The league's in-progress season, else its most recent one. */
   season: { id: string; name: string };
 }
@@ -21,7 +21,7 @@ export async function getAdminLeagueContext(): Promise<AdminLeagueContext> {
   const supabase = createSupabaseAdminClient();
   const { data: leagueRows } = await supabase
     .from("league")
-    .select("id, name, logo_url")
+    .select("id, name, slug, logo_url")
     .neq("status", "archived")
     .order("created_at");
   const leagues = leagueRows ?? [];
