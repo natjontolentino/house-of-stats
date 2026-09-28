@@ -313,8 +313,24 @@ tbody tr:hover {
 /* Hero */
 
 .hero {
+  position: relative;
   background: linear-gradient(160deg, var(--navy), #12121f);
   padding: 64px 0 48px;
+  overflow: hidden;
+}
+
+.hero__court {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--accent);
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.hero > .wide-page {
+  position: relative;
 }
 
 .hero__eyebrow {
