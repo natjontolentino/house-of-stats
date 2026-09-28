@@ -345,7 +345,7 @@ tbody tr:hover {
   width: 100%;
   height: 100%;
   color: var(--navy);
-  opacity: 0.05;
+  opacity: 0.12;
   pointer-events: none;
 }
 

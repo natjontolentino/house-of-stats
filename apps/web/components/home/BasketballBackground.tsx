@@ -1,3 +1,17 @@
+/**
+ * A solid basketball silhouette (traced from the user's own reference
+ * artwork, not hand-drawn) scattered as a background texture. Declared once
+ * in <defs> and placed via <use> so the ~4KB path is only embedded once
+ * regardless of how many copies are scattered. The caller supplies the class
+ * that sets color/opacity/positioning for its own section.
+ */
+const BALL_PATH_D =
+  "M 176.500 101.051 C 85.941 115.107, 26.528 199.271, 44.595 287.907 C 52.883 328.565, 80.423 367.017, 115.500 386.904 L 119.500 389.172 116.503 386.836 C 93.498 368.905, 79.271 352.332, 68.202 330.573 L 64.169 322.645 66.163 317.573 C 72.558 301.309, 87.048 285.971, 114.363 266.550 C 144.816 244.899, 156.238 230.111, 157.729 210.405 C 158.281 203.100, 158.312 203.032, 161.393 202.487 C 167.001 201.494, 189.486 200.229, 190.098 200.872 C 190.760 201.567, 193.261 247.833, 195.511 301 C 196.315 319.975, 197.305 342.250, 197.713 350.500 L 198.454 365.500 199.160 351.500 C 199.548 343.800, 200.570 320.850, 201.431 300.500 C 203.682 247.288, 206.184 201.607, 206.890 200.829 C 207.499 200.159, 229.602 201.459, 235.750 202.526 C 238.934 203.079, 239 203.197, 239 208.364 C 239 228.534, 252.092 245.366, 286.550 269.500 C 308.468 284.851, 321.712 298.889, 329.390 314.912 L 332.902 322.239 328.824 330.370 C 318.802 350.348, 304.736 367.398, 286 382.279 C 276.824 389.567, 276.451 389.960, 281.500 387.012 C 311.681 369.388, 337.055 337.670, 347.908 304 C 376.504 215.283, 322.323 122.814, 230.077 102.903 C 219.145 100.544, 186.941 99.430, 176.500 101.051 M 182 115.682 C 161.973 117.750, 137.091 126.775, 118.694 138.642 L 111.887 143.033 114.146 146.266 C 119.249 153.574, 122.662 157.228, 132.671 166.104 C 138.450 171.230, 145.479 178.516, 148.290 182.296 C 152.781 188.336, 153.718 189.106, 156.016 188.647 C 158.335 188.183, 170.516 186.839, 185.677 185.374 L 190.854 184.874 191.405 178.687 C 191.708 175.284, 192.451 165.525, 193.057 157 C 193.663 148.475, 194.794 136.325, 195.571 130 C 197.581 113.640, 197.969 114.973, 191.250 115.160 C 188.088 115.248, 183.925 115.483, 182 115.682 M 200.020 117.102 C 200.031 118.421, 200.679 124.900, 201.460 131.500 C 202.241 138.100, 203.374 150.475, 203.978 159 C 204.583 167.525, 205.314 176.839, 205.604 179.699 L 206.131 184.897 210.316 185.381 C 212.617 185.646, 219.675 186.373, 226 186.994 C 232.325 187.616, 238.850 188.356, 240.501 188.639 C 243.244 189.110, 243.903 188.607, 248.180 182.781 C 250.754 179.277, 257.053 172.657, 262.180 168.070 C 272.877 158.499, 277.887 153.267, 282.107 147.258 L 285.086 143.015 278.293 138.633 C 257.664 125.327, 233.198 117.038, 209.664 115.384 L 200 114.705 200.020 117.102 M 101.323 151.864 C 84.757 166.170, 69.401 188.416, 61.375 209.734 C 58.419 217.586, 53.893 234, 54.683 234 C 54.980 234, 57.310 232.260, 59.861 230.132 C 67.869 223.456, 83.038 214.009, 95.500 207.937 C 106.823 202.421, 132.434 193.041, 136.250 193.013 C 137.213 193.006, 138 192.625, 138 192.166 C 138 191.012, 131.013 181.147, 124.392 172.953 C 118.293 165.404, 110 151.506, 110 148.833 C 110 145.395, 108.009 146.091, 101.323 151.864 M 287.386 147.707 C 285.366 153.911, 279.901 163.057, 271.975 173.500 C 262.644 185.794, 258.492 191.897, 259.136 192.376 C 259.336 192.525, 263.100 193.664, 267.500 194.907 C 291.293 201.627, 314.800 213.271, 333.750 227.722 C 343.403 235.084, 343.406 235.079, 338.971 219.880 C 332.442 197.507, 318.233 174.096, 300.631 156.714 C 290.264 146.477, 288.236 145.097, 287.386 147.707 M 139.500 205.795 C 112.176 210.302, 56.434 231.655, 53.490 238.742 C 51.855 242.676, 51.768 275.280, 53.365 285.012 C 55.034 295.176, 59.020 309.926, 61.855 316.428 L 63.587 320.399 66.377 312.748 C 72.203 296.775, 84.975 280.857, 107.209 261.859 C 129.615 242.715, 135.844 235.337, 139.988 223.034 C 142.785 214.733, 142.518 205.297, 139.500 205.795 M 254.866 206.849 C 254.501 211.329, 255.407 218.095, 257.094 223.500 C 260.592 234.704, 266.968 242.349, 287.523 259.979 C 304.285 274.356, 311.360 281.486, 318.804 291.500 C 323.619 297.979, 332 314.248, 332 317.118 C 332 318.088, 332.416 319.139, 332.924 319.453 C 335.117 320.808, 342.025 296.678, 344.039 280.624 C 345.455 269.345, 344.878 241.508, 343.162 238.302 C 340.777 233.847, 305.414 218.323, 283.500 212.112 C 263.771 206.520, 255.023 204.912, 254.866 206.849";
+
+/** Center and reference height of the path above, in its own coordinate space -- used to place and scale each scattered copy. */
+const PATH_CENTER = { x: 196, y: 245 };
+const PATH_HEIGHT = 493;
+
 interface BallSpec {
   cx: number;
   cy: number;
@@ -9,33 +23,37 @@ const BALLS: BallSpec[] = [
   { cx: 110, cy: 110, r: 70, rotate: -18 },
   { cx: 860, cy: 90, r: 95, rotate: 22 },
   { cx: 520, cy: 430, r: 58, rotate: 8 },
-  { cx: 230, cy: 390, r: 42, rotate: -28 },
-  { cx: 730, cy: 340, r: 52, rotate: 16 },
-  { cx: 960, cy: 440, r: 38, rotate: -12 },
-  { cx: 30, cy: 440, r: 34, rotate: 6 },
-  { cx: 420, cy: 60, r: 30, rotate: -6 },
+  { cx: 230, cy: 390, r: 46, rotate: -28 },
+  { cx: 730, cy: 340, r: 56, rotate: 16 },
+  { cx: 960, cy: 440, r: 42, rotate: -12 },
+  { cx: 30, cy: 440, r: 38, rotate: 6 },
+  { cx: 420, cy: 55, r: 34, rotate: -6 },
 ];
 
-/** One basketball drawn in line art -- outer seam plus the classic cross + two bowed side seams. */
-function Ball({ cx, cy, r, rotate }: BallSpec) {
-  const w = Math.max(1.5, r * 0.04);
+function BallInstance({ cx, cy, r, rotate }: BallSpec) {
+  const scale = (2 * r) / PATH_HEIGHT;
+  // <use>'s x/y is an outer translate applied after the transform below, so
+  // offsetting by the (already rotated+scaled) center lands the shape at (cx, cy).
+  const x = cx - PATH_CENTER.x * scale;
+  const y = cy - PATH_CENTER.y * scale;
   return (
-    <g transform={`rotate(${rotate} ${cx} ${cy})`}>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="currentColor" strokeWidth={w} />
-      <line x1={cx} y1={cy - r} x2={cx} y2={cy + r} stroke="currentColor" strokeWidth={w} />
-      <line x1={cx - r} y1={cy} x2={cx + r} y2={cy} stroke="currentColor" strokeWidth={w} />
-      <path d={`M ${cx} ${cy - r} Q ${cx + r * 0.62} ${cy} ${cx} ${cy + r}`} fill="none" stroke="currentColor" strokeWidth={w} />
-      <path d={`M ${cx} ${cy - r} Q ${cx - r * 0.62} ${cy} ${cx} ${cy + r}`} fill="none" stroke="currentColor" strokeWidth={w} />
-    </g>
+    <use
+      href="#basketball-mark"
+      x={x}
+      y={y}
+      transform={`scale(${scale}) rotate(${rotate} ${PATH_CENTER.x} ${PATH_CENTER.y})`}
+    />
   );
 }
 
-/** Decorative scattered basketballs used as a background texture -- pure SVG, no image asset. Purely visual: aria-hidden and absolutely positioned behind a section's real content. The caller supplies the class that sets color/opacity/positioning for its own background (dark vs. light section). */
 export function BasketballBackground({ className }: { className: string }) {
   return (
     <svg className={className} viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <defs>
+        <path id="basketball-mark" d={BALL_PATH_D} fillRule="evenodd" fill="currentColor" />
+      </defs>
       {BALLS.map((b, i) => (
-        <Ball key={i} {...b} />
+        <BallInstance key={i} {...b} />
       ))}
     </svg>
   );
