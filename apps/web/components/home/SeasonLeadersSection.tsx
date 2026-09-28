@@ -77,7 +77,7 @@ export function SeasonLeadersSection({
                 </div>
                 {cat.rows.map((row, i) => (
                   <div className="leaders-row" key={row.name + i}>
-                    <span className={`leaders-row__rank${i === 0 ? " leaders-row__rank--first" : ""}`}>{i + 1}</span>
+                    <span className={`leaders-row__rank${i < 3 ? ` leaders-row__rank--medal${i + 1}` : ""}`}>{i + 1}</span>
                     <span className="leaders-row__name">{row.name}</span>
                     <span className="leaders-row__value">{row.value}</span>
                   </div>

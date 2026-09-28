@@ -513,48 +513,89 @@ tbody tr:hover {
 .league-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  background: var(--cream-card);
+  gap: 16px;
+  background: var(--panel);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--accent);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.league-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .league-card__badge {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-sm);
   background: var(--navy);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 16px;
+}
+
+.league-card__body {
+  min-width: 0;
 }
 
 .league-card__name {
   font-weight: 700;
-  font-size: 14.5px;
-  margin: 0 0 2px;
+  font-size: 15px;
+  margin: 0 0 3px;
 }
 
 .league-card__meta {
   font-size: 12.5px;
   color: var(--muted);
-  margin: 0;
+  margin: 0 0 6px;
+}
+
+.status-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.status-pill--active {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.status-pill--complete {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--muted);
+}
+
+.status-pill--upcoming {
+  background: rgba(215, 90, 44, 0.12);
+  color: var(--accent-dark);
 }
 
 .league-card--add {
   background: transparent;
   border: 1.5px dashed var(--border-strong);
+  border-left: 1.5px dashed var(--border-strong);
   color: var(--accent-dark);
+  box-shadow: none;
 }
 
 .league-card__plus {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  width: 60px;
+  height: 60px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--accent);
   color: var(--accent);
@@ -562,7 +603,7 @@ tbody tr:hover {
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 20px;
+  font-size: 22px;
 }
 
 /* Season leaders */
@@ -582,6 +623,7 @@ tbody tr:hover {
   border-radius: var(--radius);
   padding: 18px 20px;
   box-shadow: var(--shadow-sm);
+  border-top: 3px solid var(--accent);
 }
 
 .leaders-card__head {
@@ -611,18 +653,39 @@ tbody tr:hover {
   gap: 10px;
   padding: 7px 0;
   font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.leaders-row:last-child {
+  border-bottom: none;
 }
 
 .leaders-row__rank {
-  width: 16px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
   font-weight: 700;
   color: var(--muted-light);
-  font-size: 13px;
+  font-size: 12px;
 }
 
-.leaders-row__rank--first {
-  color: var(--accent-dark);
+.leaders-row__rank--medal1 {
+  background: #f4c247;
+  color: #5c4108;
+}
+
+.leaders-row__rank--medal2 {
+  background: #d6d9de;
+  color: #45484d;
+}
+
+.leaders-row__rank--medal3 {
+  background: #dba873;
+  color: #5a3717;
 }
 
 .leaders-row__name {
