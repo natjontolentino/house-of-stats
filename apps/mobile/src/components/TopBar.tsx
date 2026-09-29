@@ -196,11 +196,13 @@ function CompactTeamHeader({
       accessibilityRole="button"
       accessibilityLabel={`Show ${name}'s grid`}
     >
-      <Text style={styles.compactTeamName} numberOfLines={1}>
+      <Text style={[styles.compactTeamName, active && styles.compactTeamNameActive]} numberOfLines={1}>
         {name}
       </Text>
       <View style={styles.compactScoreRow}>
-        <Text style={[styles.compactScore, { fontFamily: gridFont(true) }]}>{score}</Text>
+        <Text style={[styles.compactScore, active && styles.compactScoreActive, { fontFamily: gridFont(true) }]}>
+          {score}
+        </Text>
         {foulCount !== undefined && (
           <Text style={[styles.foulPill, { color: foulPillColor(foulStatus), borderColor: foulPillColor(foulStatus) }]}>
             {foulCount}PF
@@ -262,8 +264,14 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 6,
   },
-  compactTeamBlockActive: { backgroundColor: "rgba(255,255,255,0.16)" },
+  // Fix: the previous translucent-white highlight was too subtle to notice
+  // at a glance which team is currently being tracked — a solid, saturated
+  // block (matching the app's existing "selected" amber elsewhere) with a
+  // white ring reads clearly against the dark bar even from a distance.
+  compactTeamBlockActive: { backgroundColor: "#f5a623", borderWidth: 2, borderColor: "#ffffff" },
   compactTeamName: { color: "#ccc", fontSize: 10, textTransform: "uppercase" },
+  compactTeamNameActive: { color: "#1a1a2e" },
+  compactScoreActive: { color: "#1a1a2e" },
   compactScoreRow: { flexDirection: "row", alignItems: "baseline", gap: 4 },
   compactScore: { color: "white", fontSize: 22, fontWeight: "800", fontVariant: ["tabular-nums"] },
   foulPill: { fontSize: 10, fontWeight: "700", borderWidth: 1, borderRadius: 4, paddingHorizontal: 3 },
