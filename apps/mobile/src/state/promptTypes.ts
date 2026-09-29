@@ -25,12 +25,14 @@ export type PromptState =
       benchOptions: Array<{ playerId: string; name: string; jersey: string }>;
     }
   | {
-      /** "Sub 5" — swap the entire on-court lineup in one action, for leagues that require a full-unit substitution on a fixed clock. */
+      /** "Subs" — swap any number (2 or more, up to the whole lineup) of on-court players for bench players in one action, for leagues that require multi-player substitutions on a fixed clock. */
       kind: "bulk_substitution";
       teamId: string;
-      /** On-court snapshot taken when the picker opened; every one of these players goes out. */
-      outgoingPlayerIds: string[];
+      /** On-court snapshot taken when the picker opened — the pool of players selectable to go out. */
+      onCourtOptions: Array<{ playerId: string; name: string; jersey: string }>;
+      /** Bench snapshot taken when the picker opened — the pool of players selectable to come in. */
       benchOptions: Array<{ playerId: string; name: string; jersey: string }>;
-      /** Incoming players picked so far, in pick order — paired index-for-index with outgoingPlayerIds on confirm. */
+      /** Chosen so far, in pick order — paired index-for-index with chosenIn on confirm (counts must match). */
+      chosenOut: string[];
       chosenIn: string[];
     };

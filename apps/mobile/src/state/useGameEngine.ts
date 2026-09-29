@@ -488,40 +488,53 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
   const cancelPrompt = useCallback(() => setPrompt({ kind: "none" }), []);
 
   /**
-   * "Sub 5": opens a picker for the entire incoming lineup. Snapshots the
-   * team's current on-court players as the outgoing set — every one of them
-   * goes out, paired index-for-index with whichever bench players get chosen.
+   * "Subs": opens a picker for swapping any number of on-court players for
+   * bench players at once (2 up to the whole lineup) — for leagues that
+   * require multi-player substitutions on a fixed clock. Snapshots both the
+   * on-court and bench pools when the picker opens; the tracker then taps to
+   * choose which of each pool are involved.
    */
   const startBulkSubstitution = useCallback(
     (teamId: string) => {
       if (!liveState) return;
       const teamState = teamId === game.home_team_id ? liveState.home : liveState.away;
-      const benchOptions = teamState.benchPlayerIds
-        .filter((id) => !teamState.disqualifiedPlayerIds.includes(id))
-        .map((id) => ({
-          playerId: id,
-          name: (bundle.players[id] as { nickname: string })?.nickname ?? "?",
-          jersey: bundle.jerseyByPlayer[id] ?? "?",
-        }));
+      const label = (id: string) => ({
+        playerId: id,
+        name: (bundle.players[id] as { nickname: string })?.nickname ?? "?",
+        jersey: bundle.jerseyByPlayer[id] ?? "?",
+      });
       setPrompt({
         kind: "bulk_substitution",
         teamId,
-        outgoingPlayerIds: [...teamState.onCourtPlayerIds],
-        benchOptions,
+        onCourtOptions: teamState.onCourtPlayerIds.map(label),
+        benchOptions: teamState.benchPlayerIds.filter((id) => !teamState.disqualifiedPlayerIds.includes(id)).map(label),
+        chosenOut: [],
         chosenIn: [],
       });
     },
     [liveState, game.home_team_id, bundle.players, bundle.jerseyByPlayer],
   );
 
-  /** Toggles one bench player in/out of the incoming five, capped at the outgoing count. */
-  const toggleBulkSubCandidate = useCallback((playerId: string) => {
+  /** Toggles one on-court player in/out of the outgoing set, capped at the on-court pool size. */
+  const toggleBulkSubOut = useCallback((playerId: string) => {
+    setPrompt((prev) => {
+      if (prev.kind !== "bulk_substitution") return prev;
+      if (prev.chosenOut.includes(playerId)) {
+        return { ...prev, chosenOut: prev.chosenOut.filter((id) => id !== playerId) };
+      }
+      if (prev.chosenOut.length >= prev.onCourtOptions.length) return prev;
+      return { ...prev, chosenOut: [...prev.chosenOut, playerId] };
+    });
+  }, []);
+
+  /** Toggles one bench player in/out of the incoming set, capped at the on-court pool size (the most subs that could ever be needed). */
+  const toggleBulkSubIn = useCallback((playerId: string) => {
     setPrompt((prev) => {
       if (prev.kind !== "bulk_substitution") return prev;
       if (prev.chosenIn.includes(playerId)) {
         return { ...prev, chosenIn: prev.chosenIn.filter((id) => id !== playerId) };
       }
-      if (prev.chosenIn.length >= prev.outgoingPlayerIds.length) return prev;
+      if (prev.chosenIn.length >= prev.onCourtOptions.length) return prev;
       return { ...prev, chosenIn: [...prev.chosenIn, playerId] };
     });
   }, []);
@@ -530,28 +543,29 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
    * Emits the whole swap as N individual `substitution` events (never a
    * mid-game `lineup_set` — clock.ts only ever closes an on-court stint via
    * a substitution's player_out match or a period_end, so a lineup_set here
-   * would silently leak the outgoing players' minutes). The outgoing and
-   * incoming sets are always disjoint (outgoing = the pre-swap on-court
-   * snapshot, incoming = bench players chosen from that same snapshot), so
-   * validating every pair against that one fixed snapshot is safe even
-   * though liveState won't reflect earlier pairs in this batch yet.
+   * would silently leak the outgoing players' minutes). chosenOut is always
+   * a subset of the on-court snapshot and chosenIn a subset of the bench
+   * snapshot taken when the picker opened, so those two sets are always
+   * disjoint — validating every pair against that one fixed snapshot is
+   * safe even though liveState won't reflect earlier pairs in this batch yet.
    */
   const confirmBulkSubstitution = useCallback(async () => {
     if (prompt.kind !== "bulk_substitution") return;
-    const { teamId, outgoingPlayerIds, chosenIn } = prompt;
-    if (chosenIn.length !== outgoingPlayerIds.length) return;
+    const { teamId, onCourtOptions, chosenOut, chosenIn } = prompt;
+    if (chosenOut.length === 0 || chosenOut.length !== chosenIn.length) return;
     const teamState = teamId === game.home_team_id ? liveState?.home : liveState?.away;
     if (!teamState) return;
-    for (let i = 0; i < outgoingPlayerIds.length; i++) {
-      const result = validateSubstitution(outgoingPlayerIds, outgoingPlayerIds[i], chosenIn[i], teamState.disqualifiedPlayerIds);
+    const onCourtSnapshot = onCourtOptions.map((o) => o.playerId);
+    for (let i = 0; i < chosenOut.length; i++) {
+      const result = validateSubstitution(onCourtSnapshot, chosenOut[i], chosenIn[i], teamState.disqualifiedPlayerIds);
       if (!result.valid) {
         setPrompt({ kind: "message", text: SUBSTITUTION_REJECTION_MESSAGES[result.reason!] });
         return;
       }
     }
     setPrompt({ kind: "none" });
-    for (let i = 0; i < outgoingPlayerIds.length; i++) {
-      await appendEvent("substitution", teamId, null, { player_in: chosenIn[i], player_out: outgoingPlayerIds[i] });
+    for (let i = 0; i < chosenOut.length; i++) {
+      await appendEvent("substitution", teamId, null, { player_in: chosenIn[i], player_out: chosenOut[i] });
     }
     haptic("tap");
   }, [prompt, liveState, game.home_team_id, appendEvent, haptic]);
@@ -712,7 +726,8 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
     resolveImplicitSubstitution,
     resolveDisqualification,
     startBulkSubstitution,
-    toggleBulkSubCandidate,
+    toggleBulkSubOut,
+    toggleBulkSubIn,
     confirmBulkSubstitution,
     cancelPrompt,
     setPrompt,

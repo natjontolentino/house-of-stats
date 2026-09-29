@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import type { GameEngine } from "../state/useGameEngine";
 import { CLOCK_SYNC_ADJUSTMENTS_MS } from "@courtstats/shared";
 
@@ -119,44 +119,82 @@ export function PromptOverlay({ engine }: { engine: GameEngine }) {
   }
 
   if (prompt.kind === "bulk_substitution") {
-    const total = prompt.outgoingPlayerIds.length;
-    const ready = prompt.chosenIn.length === total;
-    const capped = prompt.chosenIn.length >= total;
+    const maxCount = prompt.onCourtOptions.length;
+    const outCount = prompt.chosenOut.length;
+    const inCount = prompt.chosenIn.length;
+    const ready = outCount > 0 && outCount === inCount;
+    const outCapped = outCount >= maxCount;
+    const inCapped = inCount >= maxCount;
     return (
       <View style={[styles.overlayBar, styles.promptBar]}>
         <Text style={styles.promptText}>
-          Substituting all {total} players — pick {total} incoming ({prompt.chosenIn.length}/{total})
+          Substitute multiple players — tap who&apos;s coming out, then who&apos;s coming in (out {outCount}, in{" "}
+          {inCount})
         </Text>
-        <View style={styles.optionsRow}>
-          {prompt.benchOptions.map((opt) => {
-            const selected = prompt.chosenIn.includes(opt.playerId);
-            const disabled = !selected && capped;
-            return (
-              <Pressable
-                key={opt.playerId}
-                disabled={disabled}
-                style={[
-                  styles.optionButton,
-                  selected && styles.optionButtonSelected,
-                  disabled && styles.optionButtonDisabled,
-                ]}
-                onPress={() => engine.toggleBulkSubCandidate(opt.playerId)}
-              >
-                <Text style={styles.optionButtonText}>
-                  #{opt.jersey} {opt.name}
-                  {selected ? " ✓" : ""}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        {/* Fixed-height picker of just the selectable names (Fix: tracking the
+            OSH game surfaced that hunting through the full scrollable grid
+            for each bench player, one substitution at a time, was the real
+            pain point — this keeps every on-court and bench name in one
+            small always-visible panel instead). */}
+        <ScrollView style={styles.bulkScroll} nestedScrollEnabled>
+          <Text style={styles.promptSubLabel}>Coming out (on court)</Text>
+          <View style={styles.optionsRow}>
+            {prompt.onCourtOptions.map((opt) => {
+              const selected = prompt.chosenOut.includes(opt.playerId);
+              const disabled = !selected && outCapped;
+              return (
+                <Pressable
+                  key={opt.playerId}
+                  disabled={disabled}
+                  style={[
+                    styles.optionButton,
+                    selected && styles.optionButtonSelectedOut,
+                    disabled && styles.optionButtonDisabled,
+                  ]}
+                  onPress={() => engine.toggleBulkSubOut(opt.playerId)}
+                >
+                  <Text style={styles.optionButtonText}>
+                    #{opt.jersey} {opt.name}
+                    {selected ? " ✓" : ""}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={styles.promptSubLabel}>Coming in (bench)</Text>
+          <View style={styles.optionsRow}>
+            {prompt.benchOptions.map((opt) => {
+              const selected = prompt.chosenIn.includes(opt.playerId);
+              const disabled = !selected && inCapped;
+              return (
+                <Pressable
+                  key={opt.playerId}
+                  disabled={disabled}
+                  style={[
+                    styles.optionButton,
+                    selected && styles.optionButtonSelected,
+                    disabled && styles.optionButtonDisabled,
+                  ]}
+                  onPress={() => engine.toggleBulkSubIn(opt.playerId)}
+                >
+                  <Text style={styles.optionButtonText}>
+                    #{opt.jersey} {opt.name}
+                    {selected ? " ✓" : ""}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </ScrollView>
         <View style={styles.optionsRow}>
           <Pressable
             disabled={!ready}
             style={[styles.smallButton, ready ? styles.confirmButton : styles.confirmButtonDisabled]}
             onPress={engine.confirmBulkSubstitution}
           >
-            <Text style={[styles.smallButtonText, ready && styles.confirmButtonText]}>Confirm swap</Text>
+            <Text style={[styles.smallButtonText, ready && styles.confirmButtonText]}>
+              Confirm swap ({outCount})
+            </Text>
           </Pressable>
           <Pressable style={[styles.smallButton, styles.cancelButton]} onPress={engine.cancelPrompt}>
             <Text style={styles.smallButtonText}>Cancel</Text>
@@ -195,9 +233,14 @@ const styles = StyleSheet.create({
   messageText: { color: "#7a4a00", flex: 1, fontSize: 13 },
   promptBar: { backgroundColor: "#fde9c8" },
   promptText: { color: "#7a4a00", fontWeight: "600", marginBottom: 6 },
+  // Bounds the two picker lists to a fixed height so the confirm/cancel row
+  // is always reachable without scrolling, regardless of roster size.
+  bulkScroll: { maxHeight: 200, marginBottom: 6 },
+  promptSubLabel: { color: "#7a4a00", fontWeight: "700", fontSize: 11, textTransform: "uppercase", marginBottom: 4, marginTop: 4 },
   optionsRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   optionButton: { backgroundColor: "#1a1a2e", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
   optionButtonSelected: { backgroundColor: "#1a8f4c" },
+  optionButtonSelectedOut: { backgroundColor: "#d0021b" },
   optionButtonDisabled: { opacity: 0.35 },
   optionButtonText: { color: "white", fontWeight: "600", fontSize: 12 },
   smallButton: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: "#ddd" },

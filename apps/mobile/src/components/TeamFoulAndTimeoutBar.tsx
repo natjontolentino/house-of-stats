@@ -131,7 +131,7 @@ export function TeamFoulAndTimeoutBar({
       <FoulBox period={liveState.currentPeriod} count={teamState.teamFoulCount} status={teamState.penaltyStatus} />
 
       <Pressable style={styles.subFiveButton} onPress={() => engine.startBulkSubstitution(teamId)}>
-        <Text style={styles.subFiveButtonText}>Sub 5</Text>
+        <Text style={styles.subFiveButtonText}>Subs</Text>
       </Pressable>
 
       <View style={styles.timeoutBlock}>
@@ -210,7 +210,7 @@ export function CompactTeamFoulAndTimeoutBar({
         Period {liveState.currentPeriod} · {teamState.teamFoulCount} {caption}
       </Text>
       <Pressable style={styles.subFiveButton} onPress={() => engine.startBulkSubstitution(teamId)}>
-        <Text style={styles.subFiveButtonText}>Sub 5</Text>
+        <Text style={styles.subFiveButtonText}>Subs</Text>
       </Pressable>
       <View style={compactStyles.timeoutRow}>
         {teamState.timeoutBoxes.map((box, i) => (
