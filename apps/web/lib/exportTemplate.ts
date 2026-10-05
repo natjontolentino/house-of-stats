@@ -5,6 +5,9 @@ import {
   computeScoreByPeriod,
   computeTeamTotalsFromPlayers,
   selectPlayerOfGame,
+  computeTeamLeaders,
+  type GameLeader,
+  type LeaderCategory,
   filterVoidedEvents,
   displayPlayerName,
   msToMinutesDisplay,
@@ -33,11 +36,6 @@ function cellStyle(header = false): string {
 function winningTeamId(liveState: LiveGameState, bundle: GameBundle): string | null {
   if (liveState.home.score === liveState.away.score) return null;
   return liveState.home.score > liveState.away.score ? bundle.game.home_team_id : bundle.game.away_team_id;
-}
-
-/** True once at least one real event has been recorded — before that, showing "Final"/a score is meaningless. */
-function hasGameStarted(bundle: GameBundle): boolean {
-  return filterVoidedEvents(bundle.events).length > 0;
 }
 
 /**
@@ -185,10 +183,38 @@ export function renderScoresheetHtml(bundle: GameBundle, liveState: LiveGameStat
 </html>`;
 }
 
-/** Shareable JPEG graphic — spec 12.2. Sized for social media, readable at phone size. */
+const LEADER_ROWS: Array<{ category: LeaderCategory; label: string }> = [
+  { category: "points", label: "Points" },
+  { category: "rebounds", label: "Rebounds" },
+  { category: "assists", label: "Assists" },
+  { category: "steals", label: "Steals" },
+  { category: "blocks", label: "Blocks" },
+  { category: "fieldGoalPct", label: "FG%" },
+  { category: "threePointMade", label: "3PT made" },
+];
+
+function leaderStat(category: LeaderCategory, leader: GameLeader): string {
+  if (category === "fieldGoalPct") {
+    return `${(leader.value * 100).toFixed(1)}% (${leader.made}/${leader.attempted})`;
+  }
+  return String(leader.value);
+}
+
+/** One team's leader in one category, or an empty cell when there isn't one. */
+function leaderCell(bundle: GameBundle, category: LeaderCategory, leader: GameLeader | null, align: "left" | "right"): string {
+  const cellStyle = `text-align:${align};min-width:0;`;
+  if (!leader) return `<div style="${cellStyle}"></div>`;
+  return `<div style="${cellStyle}">
+      <div style="font-size:26px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(playerName(bundle, leader.playerId))}</div>
+      <div style="font-size:19px;opacity:0.75;font-variant-numeric:tabular-nums">${esc(leaderStat(category, leader))}</div>
+    </div>`;
+}
+
+/** Shareable JPEG graphic — spec 12.2. Final score plus each team's game leaders, sized for social media. */
 export function renderGraphicHtml(bundle: GameBundle, liveState: LiveGameState): string {
-  const started = hasGameStarted(bundle);
-  const pog = playerOfGame(bundle, liveState);
+  const players = Object.values(liveState.players);
+  const awayLeaders = computeTeamLeaders(players, bundle.game.away_team_id);
+  const homeLeaders = computeTeamLeaders(players, bundle.game.home_team_id);
 
   const statusLabel =
     bundle.game.status === "finalized"
@@ -197,26 +223,21 @@ export function renderGraphicHtml(bundle: GameBundle, liveState: LiveGameState):
         ? `Live — Period ${liveState.currentPeriod}`
         : "Scheduled";
 
-  // Leading performers are only meaningful once real stats exist.
-  const topBlocks = started
-    ? Object.values(liveState.players)
-        .sort((a, b) => b.efficiency - a.efficiency)
-        .slice(0, 3)
-        .map(
-          (p) => `<div style="text-align:center">
-        <div style="font-size:22px;font-weight:700">${esc(playerName(bundle, p.playerId))}</div>
-        <div style="font-size:16px;opacity:0.7">${p.points} PTS · ${p.reboundsTotal} REB · ${p.assists} AST</div>
-      </div>`,
-        )
-        .join("")
-    : "";
+  const columns = "grid-template-columns:1fr 150px 1fr;column-gap:24px;";
 
-  const pogBlock = pog
-    ? `<div style="margin-top:48px;text-align:center">
-        <div style="font-size:18px;opacity:0.7">Player of the game</div>
-        <div style="font-size:32px;font-weight:700">${esc(playerName(bundle, pog.playerId))}</div>
-      </div>`
-    : "";
+  const teamBlock = (team: GameBundle["homeTeam"], score: number) => `<div style="text-align:center;min-width:0">
+      <div style="height:84px">${logoImg(team.logo_url, 84)}</div>
+      <div style="font-size:28px;font-weight:700;opacity:0.9;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(team.name)}</div>
+      <div style="font-size:104px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums">${score}</div>
+    </div>`;
+
+  const rows = LEADER_ROWS.map(
+    ({ category, label }) => `<div style="display:grid;${columns}align-items:center;padding:9px 0;border-top:1px solid rgba(255,255,255,0.14)">
+      ${leaderCell(bundle, category, awayLeaders[category], "right")}
+      <div style="text-align:center;font-size:17px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#e8845a">${esc(label)}</div>
+      ${leaderCell(bundle, category, homeLeaders[category], "left")}
+    </div>`,
+  ).join("");
 
   return `<!doctype html>
 <html>
@@ -225,23 +246,20 @@ export function renderGraphicHtml(bundle: GameBundle, liveState: LiveGameState):
     <style>body { margin: 0; font-family: Arial, sans-serif; }</style>
   </head>
   <body>
-    <div style="width:1080px;height:1080px;background:linear-gradient(135deg,#1a1a2e,#16213e);color:white;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px;box-sizing:border-box">
-      <div style="font-size:28px;opacity:0.7;margin-bottom:24px">${esc(statusLabel)}</div>
-      <div style="display:flex;align-items:center;gap:40px">
-        <div style="text-align:center">
-          ${logoImg(bundle.awayTeam.logo_url, 96, "display:block;margin:0 auto 12px;")}
-          <div style="font-size:28px;opacity:0.8">${esc(bundle.awayTeam.short_name)}</div>
-          <div style="font-size:96px;font-weight:800;font-variant-numeric:tabular-nums">${liveState.away.score}</div>
-        </div>
-        <div style="font-size:36px;opacity:0.5">–</div>
-        <div style="text-align:center">
-          ${logoImg(bundle.homeTeam.logo_url, 96, "display:block;margin:0 auto 12px;")}
-          <div style="font-size:28px;opacity:0.8">${esc(bundle.homeTeam.short_name)}</div>
-          <div style="font-size:96px;font-weight:800;font-variant-numeric:tabular-nums">${liveState.home.score}</div>
-        </div>
+    <div style="width:1080px;height:1080px;background:linear-gradient(135deg,#1a1a2e,#16213e);color:white;display:flex;flex-direction:column;padding:48px 60px;box-sizing:border-box">
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;height:64px">
+        ${logoImg(bundle.league.logo_url, 64)}
+        <div style="font-size:34px;font-weight:800">${esc(bundle.league.name)}</div>
       </div>
-      ${pogBlock}
-      <div style="margin-top:40px;display:flex;gap:32px">${topBlocks}</div>
+      <div style="text-align:center;font-size:24px;letter-spacing:3px;text-transform:uppercase;opacity:0.7;margin:10px 0 18px">${esc(statusLabel)}</div>
+
+      <div style="display:grid;${columns}align-items:start">
+        ${teamBlock(bundle.awayTeam, liveState.away.score)}
+        <div style="text-align:center;font-size:44px;opacity:0.45;padding-top:150px">–</div>
+        ${teamBlock(bundle.homeTeam, liveState.home.score)}
+      </div>
+
+      <div style="margin-top:auto">${rows}</div>
     </div>
   </body>
 </html>`;
