@@ -30,12 +30,12 @@ function logoImg(url: string | null, px: number, extraStyle = ""): string {
 }
 
 function cellStyle(header = false): string {
-  return `border:1px solid #ccc;padding:4px 8px;text-align:center;font-weight:${header ? 700 : 400};font-size:${header ? 10 : 12}px;text-transform:${header ? "uppercase" : "none"};`;
+  return `border:1px solid #ccc;padding:3px 8px;text-align:center;font-weight:${header ? 700 : 400};font-size:${header ? 10 : 12}px;text-transform:${header ? "uppercase" : "none"};`;
 }
 
 /** The scoresheet's team-totals row: bold, shaded and ruled off so it reads as the tally, not another player. */
 const totalsCellStyle =
-  "border:1px solid #999;border-top:2px solid #222;padding:5px 8px;text-align:center;font-weight:700;font-size:12px;background:#e9ecf2;";
+  "border:1px solid #999;border-top:2px solid #222;padding:3px 8px;text-align:center;font-weight:700;font-size:12px;background:#e9ecf2;";
 
 function shotTotalCell(made: number, attempted: number): string {
   const pct = attempted > 0 ? `<div style="font-size:10px;font-weight:400;color:#444">${Math.round((made / attempted) * 100)}%</div>` : "";
@@ -151,7 +151,7 @@ export function renderScoresheetHtml(bundle: GameBundle, liveState: LiveGameStat
 <html>
   <head>
     <meta charset="utf-8" />
-    <style>body { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 24px; }</style>
+    <style>body { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 18px; }</style>
   </head>
   <body>
     <h1 style="font-size:18px;margin-bottom:0">${esc(bundle.awayTeam.name)} @ ${esc(bundle.homeTeam.name)}</h1>
