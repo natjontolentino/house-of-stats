@@ -74,26 +74,6 @@ export function BoxScoreTable({
               </tr>
             );
           })}
-          <tr style={{ fontStyle: "italic", background: "rgba(0,0,0,0.025)" }}>
-            <td></td>
-            <td>Team</td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td>
-              {teamLine?.reboundsOffensive ?? 0}/{teamLine?.reboundsDefensive ?? 0}
-            </td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td>{teamLine?.turnovers ?? 0}</td>
-            <td></td>
-            <td>{teamLine?.benchWtLabel}</td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
           <tr style={{ fontWeight: 700, background: "rgba(0,0,0,0.04)" }}>
             <td></td>
             <td>Totals</td>
@@ -116,7 +96,7 @@ export function BoxScoreTable({
             <td>{totals.blocks}</td>
             <td>{totals.turnovers}</td>
             <td>{totals.personalFouls}</td>
-            <td></td>
+            <td>{teamLine?.benchWtLabel}</td>
             <td></td>
             <td>{playerIds.reduce((sum, id) => sum + (liveState.players[id]?.efficiency ?? 0), 0)}</td>
             <td></td>
