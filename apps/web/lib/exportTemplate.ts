@@ -33,6 +33,15 @@ function cellStyle(header = false): string {
   return `border:1px solid #ccc;padding:4px 8px;text-align:center;font-weight:${header ? 700 : 400};font-size:${header ? 10 : 12}px;text-transform:${header ? "uppercase" : "none"};`;
 }
 
+/** The scoresheet's team-totals row: bold, shaded and ruled off so it reads as the tally, not another player. */
+const totalsCellStyle =
+  "border:1px solid #999;border-top:2px solid #222;padding:5px 8px;text-align:center;font-weight:700;font-size:12px;background:#e9ecf2;";
+
+function shotTotalCell(made: number, attempted: number): string {
+  const pct = attempted > 0 ? `<div style="font-size:10px;font-weight:400;color:#444">${Math.round((made / attempted) * 100)}%</div>` : "";
+  return `<td style="${totalsCellStyle}">${made}/${attempted}${pct}</td>`;
+}
+
 function winningTeamId(liveState: LiveGameState, bundle: GameBundle): string | null {
   if (liveState.home.score === liveState.away.score) return null;
   return liveState.home.score > liveState.away.score ? bundle.game.home_team_id : bundle.game.away_team_id;
@@ -106,21 +115,21 @@ export function renderScoresheetHtml(bundle: GameBundle, liveState: LiveGameStat
       <thead><tr>${headers.map((h) => `<th style="${cellStyle(true)}">${h}</th>`).join("")}</tr></thead>
       <tbody>
         ${rows}
-        <tr style="font-weight:700">
-          <td style="${cellStyle()}"></td>
-          <td style="${cellStyle()};text-align:left">Totals</td>
-          <td style="${cellStyle()}">${totals.points}</td>
-          <td style="${cellStyle()}">${totals.fieldGoalMade - totals.threePointMade}/${totals.fieldGoalAttempted - totals.threePointAttempted}</td>
-          <td style="${cellStyle()}">${totals.threePointMade}/${totals.threePointAttempted}</td>
-          <td style="${cellStyle()}">${totals.ftMade}/${totals.ftAttempted}</td>
-          <td style="${cellStyle()}">${totals.reboundsOffensive + totals.reboundsDefensive}</td>
-          <td style="${cellStyle()}">${totals.assists}</td>
-          <td style="${cellStyle()}">${totals.steals}</td>
-          <td style="${cellStyle()}">${totals.blocks}</td>
-          <td style="${cellStyle()}">${totals.turnovers}</td>
-          <td style="${cellStyle()}">${totals.personalFouls}</td>
-          <td style="${cellStyle()}">${teamEfficiency}</td>
-          <td style="${cellStyle()}"></td>
+        <tr>
+          <td style="${totalsCellStyle}"></td>
+          <td style="${totalsCellStyle};text-align:left">TEAM TOTALS</td>
+          <td style="${totalsCellStyle}">${totals.points}</td>
+          ${shotTotalCell(totals.fieldGoalMade - totals.threePointMade, totals.fieldGoalAttempted - totals.threePointAttempted)}
+          ${shotTotalCell(totals.threePointMade, totals.threePointAttempted)}
+          ${shotTotalCell(totals.ftMade, totals.ftAttempted)}
+          <td style="${totalsCellStyle}">${totals.reboundsOffensive + totals.reboundsDefensive}</td>
+          <td style="${totalsCellStyle}">${totals.assists}</td>
+          <td style="${totalsCellStyle}">${totals.steals}</td>
+          <td style="${totalsCellStyle}">${totals.blocks}</td>
+          <td style="${totalsCellStyle}">${totals.turnovers}</td>
+          <td style="${totalsCellStyle}">${totals.personalFouls}</td>
+          <td style="${totalsCellStyle}">${teamEfficiency}</td>
+          <td style="${totalsCellStyle}"></td>
         </tr>
       </tbody>
     </table>`;
@@ -193,21 +202,23 @@ const LEADER_ROWS: Array<{ category: LeaderCategory; label: string }> = [
   { category: "threePointMade", label: "3PT made" },
 ];
 
-function leaderStat(category: LeaderCategory, leader: GameLeader): string {
-  if (category === "fieldGoalPct") {
-    return `${(leader.value * 100).toFixed(1)}% (${leader.made}/${leader.attempted})`;
-  }
-  return String(leader.value);
+/** The big number beside a leader's name; FG% also carries a small makes/attempts line. */
+function leaderValue(category: LeaderCategory, leader: GameLeader): string {
+  const text = category === "fieldGoalPct" ? `${(leader.value * 100).toFixed(1)}%` : String(leader.value);
+  const detail =
+    category === "fieldGoalPct"
+      ? `<div style="font-size:16px;font-weight:400;opacity:0.7;line-height:1">${leader.made}/${leader.attempted}</div>`
+      : "";
+  return `<div style="flex:none;text-align:center;font-size:46px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums">${text}${detail}</div>`;
 }
 
-/** One team's leader in one category, or an empty cell when there isn't one. */
+/** One team's leader in one category, or an empty cell when there isn't one. The number sits next to the category label, the name outside it. */
 function leaderCell(bundle: GameBundle, category: LeaderCategory, leader: GameLeader | null, align: "left" | "right"): string {
-  const cellStyle = `text-align:${align};min-width:0;`;
+  const cellStyle = "display:flex;align-items:center;gap:16px;min-width:0;";
   if (!leader) return `<div style="${cellStyle}"></div>`;
-  return `<div style="${cellStyle}">
-      <div style="font-size:26px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(playerName(bundle, leader.playerId))}</div>
-      <div style="font-size:19px;opacity:0.75;font-variant-numeric:tabular-nums">${esc(leaderStat(category, leader))}</div>
-    </div>`;
+  const name = `<div style="flex:1;min-width:0;text-align:${align};font-size:26px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(playerName(bundle, leader.playerId))}</div>`;
+  const value = leaderValue(category, leader);
+  return `<div style="${cellStyle}">${align === "right" ? name + value : value + name}</div>`;
 }
 
 /** Shareable JPEG graphic — spec 12.2. Final score plus each team's game leaders, sized for social media. */
@@ -232,7 +243,7 @@ export function renderGraphicHtml(bundle: GameBundle, liveState: LiveGameState):
     </div>`;
 
   const rows = LEADER_ROWS.map(
-    ({ category, label }) => `<div style="display:grid;${columns}align-items:center;padding:9px 0;border-top:1px solid rgba(255,255,255,0.14)">
+    ({ category, label }) => `<div style="display:grid;${columns}align-items:center;padding:10px 0;min-height:56px;border-top:1px solid rgba(255,255,255,0.14)">
       ${leaderCell(bundle, category, awayLeaders[category], "right")}
       <div style="text-align:center;font-size:17px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#e8845a">${esc(label)}</div>
       ${leaderCell(bundle, category, homeLeaders[category], "left")}
