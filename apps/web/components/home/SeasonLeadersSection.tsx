@@ -1,9 +1,19 @@
+import Link from "next/link";
 import type { Player, PlayerSeasonLine } from "@courtstats/shared";
 import { displayPlayerName } from "@courtstats/shared";
+import { PlayerAvatar } from "../PlayerAvatar";
+
+interface LeaderRow {
+  playerId: string;
+  name: string;
+  fullName: string;
+  photoUrl: string | null;
+  value: string;
+}
 
 interface LeaderCategory {
   title: string;
-  rows: Array<{ name: string; value: string }>;
+  rows: LeaderRow[];
 }
 
 function topFive(
@@ -12,13 +22,19 @@ function topFive(
   settings: Parameters<typeof displayPlayerName>[1],
   metric: (p: PlayerSeasonLine) => number,
   format: (v: number) => string,
-): Array<{ name: string; value: string }> {
+): LeaderRow[] {
   return [...players]
     .sort((a, b) => metric(b) - metric(a))
     .slice(0, 5)
     .map((p) => {
       const player = playersById[p.playerId];
-      return { name: player ? displayPlayerName(player, settings) : "?", value: format(metric(p)) };
+      return {
+        playerId: p.playerId,
+        name: player ? displayPlayerName(player, settings) : "?",
+        fullName: player?.full_name ?? "?",
+        photoUrl: player?.photo_url ?? null,
+        value: format(metric(p)),
+      };
     });
 }
 
@@ -78,7 +94,15 @@ export function SeasonLeadersSection({
                 {cat.rows.map((row, i) => (
                   <div className="leaders-row" key={row.name + i}>
                     <span className={`leaders-row__rank${i < 3 ? ` leaders-row__rank--medal${i + 1}` : ""}`}>{i + 1}</span>
-                    <span className="leaders-row__name">{row.name}</span>
+                    <span className="leaders-row__name">
+                      <Link
+                        href={`/players/${row.playerId}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "inherit", textDecoration: "none", minWidth: 0 }}
+                      >
+                        <PlayerAvatar name={row.fullName} photoUrl={row.photoUrl} size={26} />
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.name}</span>
+                      </Link>
+                    </span>
                     <span className="leaders-row__value">{row.value}</span>
                   </div>
                 ))}

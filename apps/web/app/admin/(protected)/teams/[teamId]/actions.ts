@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createSupabaseAdminClient } from "../../../../../lib/supabaseAdminClient";
+import { PlayerPhotoError, processPlayerPhoto } from "../../../../../lib/playerPhoto";
 import { NICKNAME_MAX_LENGTH } from "@courtstats/shared";
 
 function extFromFile(file: File): string {
@@ -107,6 +109,76 @@ export async function updatePlayerAction(formData: FormData) {
   await supabase.from("roster_entry").update({ jersey_number: jerseyNumber.trim() }).eq("id", rosterEntryId);
 
   revalidatePath(`/admin/teams/${teamId}`);
+}
+
+const PHOTO_BUCKET = "league-assets";
+
+/** The storage path inside the bucket for a public URL we generated, or null for anything else. */
+function photoPathFromUrl(url: string | null): string | null {
+  if (!url) return null;
+  const marker = `/${PHOTO_BUCKET}/`;
+  const at = url.indexOf(marker);
+  return at === -1 ? null : url.slice(at + marker.length);
+}
+
+function backToRoster(teamId: string, playerId: string, error?: string): never {
+  const query = error ? `?photoError=${encodeURIComponent(error)}` : "";
+  redirect(`/admin/teams/${teamId}${query}#player-${playerId}`);
+}
+
+/** Uploads (or replaces) a player's profile photo: validated, cropped square and shrunk to 400x400 before it is stored. */
+export async function uploadPlayerPhotoAction(formData: FormData) {
+  const playerId = formData.get("playerId");
+  const teamId = formData.get("teamId");
+  const photo = formData.get("photo");
+  if (typeof playerId !== "string" || typeof teamId !== "string") return;
+  if (!(photo instanceof File)) backToRoster(teamId, playerId, "Choose a photo to upload.");
+
+  let processed: Buffer;
+  try {
+    processed = await processPlayerPhoto(photo);
+  } catch (err) {
+    backToRoster(teamId, playerId, err instanceof PlayerPhotoError ? err.message : "That photo couldn't be processed.");
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data: existing } = await supabase.from("player").select("photo_url").eq("id", playerId).maybeSingle();
+
+  const path = `player-photos/${playerId}-${Date.now()}.webp`;
+  const { error: uploadError } = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .upload(path, processed, { contentType: "image/webp", upsert: true });
+  if (uploadError) backToRoster(teamId, playerId, "Upload failed. Try again.");
+
+  const { data: urlData } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+  const { error: updateError } = await supabase.from("player").update({ photo_url: urlData.publicUrl }).eq("id", playerId);
+  if (updateError) {
+    await supabase.storage.from(PHOTO_BUCKET).remove([path]);
+    backToRoster(teamId, playerId, "Couldn't save the photo. Try again.");
+  }
+
+  const oldPath = photoPathFromUrl(existing?.photo_url ?? null);
+  if (oldPath) await supabase.storage.from(PHOTO_BUCKET).remove([oldPath]);
+
+  revalidatePath(`/admin/teams/${teamId}`);
+  revalidatePath("/", "layout");
+  backToRoster(teamId, playerId);
+}
+
+export async function removePlayerPhotoAction(formData: FormData) {
+  const playerId = formData.get("playerId");
+  const teamId = formData.get("teamId");
+  if (typeof playerId !== "string" || typeof teamId !== "string") return;
+
+  const supabase = createSupabaseAdminClient();
+  const { data: existing } = await supabase.from("player").select("photo_url").eq("id", playerId).maybeSingle();
+  await supabase.from("player").update({ photo_url: null }).eq("id", playerId);
+  const oldPath = photoPathFromUrl(existing?.photo_url ?? null);
+  if (oldPath) await supabase.storage.from(PHOTO_BUCKET).remove([oldPath]);
+
+  revalidatePath(`/admin/teams/${teamId}`);
+  revalidatePath("/", "layout");
+  backToRoster(teamId, playerId);
 }
 
 /** Removes the player from this team's roster without deleting the player record itself -- their past events/stats reference player_id directly and must stay intact. */

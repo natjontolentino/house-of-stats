@@ -827,3 +827,89 @@ tbody tr:hover {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }
 }
+
+/* ---- Player page: hero, stat tiles, shot-chart toggle ---- */
+.player-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+}
+.player-hero__name {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.15;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.player-hero__jersey {
+  color: var(--accent-dark);
+  font-size: 18px;
+  font-weight: 700;
+}
+.player-hero__sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap: 10px;
+}
+.stat-tile {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 8px;
+  text-align: center;
+}
+.stat-tile__value {
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.stat-tile__label {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.seg__btn {
+  padding: 8px 14px;
+  border: 0;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.seg__btn + .seg__btn {
+  border-left: 1px solid var(--border-strong);
+}
+.seg__btn--on {
+  background: var(--navy);
+  color: white;
+}
+@media (max-width: 520px) {
+  .player-hero {
+    gap: 14px;
+    padding: 16px;
+  }
+  .player-hero__name {
+    font-size: 21px;
+  }
+}

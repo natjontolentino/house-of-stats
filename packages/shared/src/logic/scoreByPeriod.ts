@@ -33,3 +33,32 @@ export function computeScoreByPeriod(
     .sort(([a], [b]) => a - b)
     .map(([period, { home, away }]) => ({ period, homePoints: home, awayPoints: away }));
 }
+
+export interface ScoreSnapshot {
+  home: number;
+  away: number;
+}
+
+/**
+ * Running score after each event, keyed by client_uuid, for a play-by-play
+ * that shows "21–25" next to every line. Pass events already stripped of
+ * voids (filterVoidedEvents) so a voided basket never counts.
+ */
+export function computeScoreTimeline(
+  events: Array<Pick<GameEvent, "client_uuid" | "event_type" | "team_id" | "payload" | "sequence">>,
+  homeTeamId: string,
+  awayTeamId: string,
+): Map<string, ScoreSnapshot> {
+  const timeline = new Map<string, ScoreSnapshot>();
+  let home = 0;
+  let away = 0;
+  for (const evt of [...events].sort((a, b) => a.sequence - b.sequence)) {
+    let points = 0;
+    if (evt.event_type === "shot_made") points = (evt.payload as { points: 2 | 3 }).points;
+    else if (evt.event_type === "free_throw_made") points = 1;
+    if (points > 0 && evt.team_id === homeTeamId) home += points;
+    else if (points > 0 && evt.team_id === awayTeamId) away += points;
+    timeline.set(evt.client_uuid, { home, away });
+  }
+  return timeline;
+}

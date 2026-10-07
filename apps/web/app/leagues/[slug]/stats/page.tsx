@@ -4,6 +4,7 @@ import { displayPlayerName } from "@courtstats/shared";
 import { fetchLeagueBySlug } from "../../../../lib/leaguePage";
 import { PLAYER_COLUMNS, TEAM_COLUMNS, sortRows } from "../../../../lib/seasonColumns";
 import { TeamLogo } from "../../../../components/TeamLogo";
+import { PlayerAvatar } from "../../../../components/PlayerAvatar";
 
 export const dynamic = "force-dynamic";
 
@@ -123,7 +124,13 @@ export default async function SeasonStatsPage({
                     <tr key={p.playerId}>
                       <td>{i + 1}</td>
                       <td style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
-                        {player ? displayPlayerName(player, stats!.settings) : "?"}
+                        <Link
+                          href={`/players/${p.playerId}`}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "inherit", textDecoration: "none" }}
+                        >
+                          <PlayerAvatar name={player?.full_name ?? "?"} photoUrl={player?.photo_url} size={24} />
+                          {player ? displayPlayerName(player, stats!.settings) : "?"}
+                        </Link>
                       </td>
                       <td>{teamsById[p.teamId]?.short_name ?? "?"}</td>
                       {PLAYER_COLUMNS.map((c) => (

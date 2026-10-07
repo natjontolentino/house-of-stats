@@ -7,7 +7,7 @@ import { Logo } from "./Logo";
 const NAV_LINKS = [
   { href: "/", label: "Live" },
   { href: "/#leagues", label: "Leagues" },
-  { href: "#", label: "Players" },
+  { href: "/players", label: "Players" },
   { href: "/#leaders", label: "Leaderboards" },
   { href: "/standings", label: "Standings" },
   { href: "/schedule", label: "Schedule" },

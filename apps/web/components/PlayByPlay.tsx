@@ -7,7 +7,12 @@ function playerName(bundle: GameBundle, playerId: string): string | undefined {
   return player ? displayPlayerName(player, bundle.settings) : undefined;
 }
 
-function describe(evt: GameEvent, bundle: GameBundle): string {
+/** A zone tag just annotates the shot before it, so it never gets a play-by-play line of its own. */
+export function isPlayByPlayEvent(evt: GameEvent): boolean {
+  return evt.event_type !== "shot_zone";
+}
+
+export function describeEvent(evt: GameEvent, bundle: GameBundle): string {
   const player = evt.player_id ? playerName(bundle, evt.player_id) : null;
   const team = evt.team_id === bundle.game.home_team_id ? bundle.homeTeam.short_name : bundle.awayTeam.short_name;
   const who = player ?? `${team} (team)`;
@@ -66,6 +71,7 @@ function describe(evt: GameEvent, bundle: GameBundle): string {
 
 export function PlayByPlay({ bundle, events }: { bundle: GameBundle; events: GameEvent[] }) {
   const visible = filterVoidedEvents(events)
+    .filter(isPlayByPlayEvent)
     .slice()
     .sort((a, b) => b.sequence - a.sequence)
     .slice(0, 100);
@@ -88,7 +94,7 @@ export function PlayByPlay({ bundle, events }: { bundle: GameBundle; events: Gam
           >
             Q{evt.period}
           </span>
-          <span>{describe(evt, bundle)}</span>
+          <span>{describeEvent(evt, bundle)}</span>
         </li>
       ))}
       {visible.length === 0 && (

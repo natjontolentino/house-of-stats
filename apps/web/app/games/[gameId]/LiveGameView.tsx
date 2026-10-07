@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import type { GameBundle } from "../../../lib/gameData";
-import { FRESHNESS_STALE_AFTER_MS } from "../../../lib/gameData";
-import { createSupabaseClient } from "../../../lib/supabaseClient";
-import { computeLiveGameState, selectPlayerOfGame, displayPlayerName, type GameEvent } from "@courtstats/shared";
+import { displayPlayerName } from "@courtstats/shared";
 import { ScoreHeader } from "../../../components/ScoreHeader";
 import { TeamLogo } from "../../../components/TeamLogo";
 import { BoxScoreTable } from "../../../components/BoxScoreTable";
@@ -12,116 +10,12 @@ import { PlayByPlay } from "../../../components/PlayByPlay";
 import { ExportButtons } from "../../../components/ExportButtons";
 import { TeamFoulsAndTimeouts } from "../../../components/TeamFoulsAndTimeouts";
 import { ScoreByPeriod } from "../../../components/ScoreByPeriod";
+import { PlayerAvatar } from "../../../components/PlayerAvatar";
+import { useLiveGame } from "./useLiveGame";
 
 export function LiveGameView({ bundle }: { bundle: GameBundle }) {
-  const [events, setEvents] = useState<GameEvent[]>(bundle.events);
-  const [gameStatus, setGameStatus] = useState(bundle.game.status);
-  const [, setTick] = useState(0);
-  const supabaseRef = useRef(createSupabaseClient());
-
-  useEffect(() => {
-    const supabase = supabaseRef.current;
-    const channel = supabase
-      .channel(`game-${bundle.game.id}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "game_event", filter: `game_id=eq.${bundle.game.id}` },
-        (payload) => {
-          const newEvent = payload.new as GameEvent;
-          setEvents((prev) =>
-            prev.some((e) => e.client_uuid === newEvent.client_uuid) ? prev : [...prev, newEvent].sort((a, b) => a.sequence - b.sequence),
-          );
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "game", filter: `id=eq.${bundle.game.id}` },
-        (payload) => {
-          setGameStatus((payload.new as { status: typeof gameStatus }).status);
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bundle.game.id]);
-
-  // Backup for the live connection: it can drop for a few seconds (phone hotspot,
-  // sleeping laptop) and does not replay what it missed, so re-read the game
-  // every 10s and take the server's copy as the truth.
-  useEffect(() => {
-    const supabase = supabaseRef.current;
-    let cancelled = false;
-    const refresh = async () => {
-      const [{ data: rows }, { data: game }] = await Promise.all([
-        supabase.from("game_event").select("*").eq("game_id", bundle.game.id).order("sequence", { ascending: true }),
-        supabase.from("game").select("status").eq("id", bundle.game.id).maybeSingle(),
-      ]);
-      if (cancelled) return;
-      if (rows) {
-        setEvents((prev) => {
-          const same = prev.length === rows.length && prev.every((e, i) => e.client_uuid === (rows[i] as GameEvent).client_uuid);
-          return same ? prev : (rows as GameEvent[]);
-        });
-      }
-      if (game) setGameStatus(game.status as typeof gameStatus);
-    };
-    const id = setInterval(refresh, 10_000);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bundle.game.id]);
-
-  // Re-render periodically so the freshness message ("N minutes ago") stays current.
-  useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 15_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const liveState = useMemo(
-    () =>
-      computeLiveGameState({
-        game: { home_team_id: bundle.game.home_team_id, away_team_id: bundle.game.away_team_id, status: gameStatus },
-        allEvents: events,
-        rosterByTeam: bundle.rosterByTeam,
-        settings: bundle.settings,
-      }),
-    [events, gameStatus, bundle],
-  );
-
-  const lastEventAt = events.length > 0 ? new Date(events[events.length - 1].created_at) : null;
-  const isStale = lastEventAt ? Date.now() - lastEventAt.getTime() > FRESHNESS_STALE_AFTER_MS : true;
-
-  const winningTeamId =
-    gameStatus === "finalized"
-      ? liveState.home.score === liveState.away.score
-        ? null
-        : liveState.home.score > liveState.away.score
-          ? bundle.game.home_team_id
-          : bundle.game.away_team_id
-      : null;
-
-  const playerOfGame =
-    gameStatus === "finalized"
-      ? selectPlayerOfGame(
-          Object.values(liveState.players).map((p) => ({
-            playerId: p.playerId,
-            teamId: p.teamId,
-            efficiency: p.efficiency,
-            points: p.points,
-            reboundsTotal: p.reboundsTotal,
-            assists: p.assists,
-          })),
-          {
-            winningTeamId,
-            restrictToWinningTeam: bundle.settings.player_of_game_limited_to_winners,
-          },
-        )
-      : null;
+  const { events, gameStatus, liveState, lastEventAt, isStale, playerOfGame } = useLiveGame(bundle);
+  const potg = playerOfGame ? bundle.players[playerOfGame.playerId] : null;
 
   return (
     <main className="page">
@@ -140,18 +34,22 @@ export function LiveGameView({ bundle }: { bundle: GameBundle }) {
       {playerOfGame && (
         <div
           className="card"
-          style={{ marginTop: 14, padding: "12px 18px", display: "flex", alignItems: "baseline", gap: 8 }}
+          style={{ marginTop: 14, padding: "12px 18px", display: "flex", alignItems: "center", gap: 12 }}
         >
-          <span style={{ fontSize: 12, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 700 }}>
-            Player of the game
-          </span>
-          <span style={{ fontWeight: 700 }}>
-            {(() => {
-              const p = bundle.players[playerOfGame.playerId];
-              return p ? displayPlayerName(p, bundle.settings) : null;
-            })()}
-            {playerOfGame.isOverride ? " (organizer selection)" : ""}
-          </span>
+          {potg && <PlayerAvatar name={potg.full_name} photoUrl={potg.photo_url} size={44} />}
+          <div>
+            <div style={{ fontSize: 12, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 700 }}>
+              Player of the game
+            </div>
+            <div style={{ fontWeight: 700 }}>
+              {potg ? (
+                <Link href={`/players/${playerOfGame.playerId}`} style={{ color: "inherit" }}>
+                  {displayPlayerName(potg, bundle.settings)}
+                </Link>
+              ) : null}
+              {playerOfGame.isOverride ? " (organizer selection)" : ""}
+            </div>
+          </div>
         </div>
       )}
 
@@ -162,7 +60,7 @@ export function LiveGameView({ bundle }: { bundle: GameBundle }) {
           <TeamLogo url={bundle.homeTeam.logo_url} size={24} />
           {bundle.homeTeam.name}
         </h2>
-        <BoxScoreTable bundle={bundle} teamId={bundle.game.home_team_id} liveState={liveState} />
+        <BoxScoreTable bundle={bundle} teamId={bundle.game.home_team_id} liveState={liveState} events={events} />
       </section>
 
       <section style={{ marginTop: 24 }}>
@@ -170,7 +68,7 @@ export function LiveGameView({ bundle }: { bundle: GameBundle }) {
           <TeamLogo url={bundle.awayTeam.logo_url} size={24} />
           {bundle.awayTeam.name}
         </h2>
-        <BoxScoreTable bundle={bundle} teamId={bundle.game.away_team_id} liveState={liveState} />
+        <BoxScoreTable bundle={bundle} teamId={bundle.game.away_team_id} liveState={liveState} events={events} />
       </section>
 
       <section style={{ marginTop: 24 }}>

@@ -9,7 +9,9 @@ const nextConfig = {
   // @sparticuz/chromium, same category of package) external skips that
   // static bundling and just require()s them normally at runtime instead.
   experimental: {
-    serverComponentsExternalPackages: ["playwright-core", "@sparticuz/chromium"],
+    // Player photos are accepted up to 2 MB; the default server-action body limit is 1 MB.
+    serverActions: { bodySizeLimit: "3mb" },
+    serverComponentsExternalPackages: ["playwright-core", "@sparticuz/chromium", "sharp"],
     // Marking the package external (above) stops webpack from choking on
     // its optional deps, but Vercel's own file tracer still needs telling
     // separately to carry the actual Chromium binary archive into the

@@ -1,6 +1,10 @@
+"use client";
+
+import { Fragment, useState } from "react";
 import type { GameBundle } from "../lib/gameData";
-import type { LiveGameState } from "@courtstats/shared";
+import type { GameEvent, LiveGameState } from "@courtstats/shared";
 import { computeTeamTotalsFromPlayers, msToMinutesDisplay, displayPlayerName } from "@courtstats/shared";
+import { GameShotChart } from "./GameShotChart";
 
 function pctDisplay(pct: number | null): string {
   return pct === null ? "-" : `${Math.round(pct * 100)}%`;
@@ -10,11 +14,15 @@ export function BoxScoreTable({
   bundle,
   teamId,
   liveState,
+  events,
 }: {
   bundle: GameBundle;
   teamId: string;
   liveState: LiveGameState;
+  /** The game's events; each player's name expands into their shot chart. */
+  events: GameEvent[];
 }) {
+  const [openPlayerId, setOpenPlayerId] = useState<string | null>(null);
   const playerIds = bundle.rosterByTeam[teamId] ?? [];
   const teamLine = liveState.teams[teamId];
   const totals = computeTeamTotalsFromPlayers(teamId, liveState.players, teamLine);
@@ -47,10 +55,26 @@ export function BoxScoreTable({
             const p = liveState.players[playerId];
             const player = bundle.players[playerId];
             if (!p || !player) return null;
+            const open = openPlayerId === playerId;
+            const name = displayPlayerName(player, bundle.settings);
             return (
-              <tr key={playerId} style={{ opacity: p.onCourt ? 1 : 0.55 }}>
+              <Fragment key={playerId}>
+              <tr style={{ opacity: p.onCourt ? 1 : 0.55 }}>
                 <td>{bundle.jerseyByPlayer[playerId]}</td>
-                <td>{displayPlayerName(player, bundle.settings)}</td>
+                <td>
+                  <button
+                    type="button"
+                    onClick={() => setOpenPlayerId(open ? null : playerId)}
+                    aria-expanded={open}
+                    title="Show shot chart"
+                    style={{ all: "unset", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}
+                  >
+                    {name}
+                    <span aria-hidden="true" style={{ fontSize: 10, color: "var(--muted-light)" }}>
+                      {open ? "▲" : "▼"}
+                    </span>
+                  </button>
+                </td>
                 <td>{p.points}</td>
                 <td>
                   {p.twoPointMade}/{p.twoPointAttempted}
@@ -72,6 +96,14 @@ export function BoxScoreTable({
                 <td>{p.efficiency}</td>
                 <td>{p.minutesMs !== null ? msToMinutesDisplay(p.minutesMs) : "-"}</td>
               </tr>
+              {open && (
+                <tr>
+                  <td colSpan={16} style={{ background: "rgba(0,0,0,0.02)" }}>
+                    <GameShotChart events={events} playerId={playerId} teamId={teamId} playerName={name} />
+                  </td>
+                </tr>
+              )}
+              </Fragment>
             );
           })}
           <tr style={{ fontWeight: 700, background: "rgba(0,0,0,0.04)" }}>
