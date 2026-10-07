@@ -208,6 +208,18 @@ export function TrackerScreen({
         <LastActionsLine bundle={bundle} events={engine.liveState.lastActions} />
         <View style={styles.bottomButtons}>
           <SyncBadge status={engine.syncStatus} pendingCount={engine.pendingCount} isPractice={isPracticeGameId(gameId)} />
+          {/* Advanced option: off by default, so the standard tracker is unchanged. */}
+          <Pressable
+            style={[styles.minutesButton, engine.shotZonesEnabled && styles.zonesButtonOn]}
+            onPress={() => engine.setShotZonesEnabled(!engine.shotZonesEnabled)}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: engine.shotZonesEnabled }}
+            accessibilityLabel="Shot zones (advanced): ask where each field goal was taken from"
+          >
+            <Text style={[styles.minutesButtonText, engine.shotZonesEnabled && styles.zonesButtonTextOn]}>
+              Shot zones: {engine.shotZonesEnabled ? "On" : "Off"}
+            </Text>
+          </Pressable>
           <Pressable style={styles.minutesButton} onPress={() => setMinutesOpen(true)}>
             <Text style={styles.minutesButtonText}>Minutes</Text>
           </Pressable>
@@ -274,6 +286,8 @@ const styles = StyleSheet.create({
   syncBadgeText: { color: "white", fontSize: 10, fontWeight: "700" },
   minutesButton: { paddingHorizontal: 10, paddingVertical: 6, backgroundColor: "#eee", borderRadius: 6 },
   minutesButtonText: { fontSize: 12, fontWeight: "600" },
+  zonesButtonOn: { backgroundColor: "#1a8f4c" },
+  zonesButtonTextOn: { color: "white" },
   endGameButton: { paddingHorizontal: 10, paddingVertical: 6, backgroundColor: "#d0021b", borderRadius: 6 },
   endGameButtonText: { fontSize: 12, fontWeight: "700", color: "white" },
 });

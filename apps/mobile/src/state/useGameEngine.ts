@@ -33,6 +33,7 @@ import { pushUnsyncedEvents, type SyncStatus } from "../sync/syncEngine";
 import { STAT_CELLS, type StatCellKey } from "./statCells";
 import type { PromptState } from "./promptTypes";
 import { ZONE_PICK_TIMEOUT_MS, type ZonePick } from "./zonePick";
+import { loadShotZonesEnabled, saveShotZonesEnabled } from "./advancedSettings";
 import { isPracticeGameId } from "./practiceMode";
 import { supabase } from "../sync/supabaseClient";
 
@@ -57,6 +58,17 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
   const [pendingCount, setPendingCount] = useState(0);
   const [zonePick, setZonePick] = useState<ZonePick | null>(null);
   const zoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Advanced option, off by default: with it off the tracker never shows the zone picker.
+  const [shotZonesEnabled, setShotZonesEnabledState] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    loadShotZonesEnabled().then((on) => {
+      if (!cancelled) setShotZonesEnabledState(on);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const clockMsRef = useRef<number | null>(null);
   const clockRunningRef = useRef(false);
@@ -218,6 +230,15 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
     setZonePick(null);
   }, []);
 
+  const setShotZonesEnabled = useCallback(
+    (enabled: boolean) => {
+      setShotZonesEnabledState(enabled);
+      saveShotZonesEnabled(enabled);
+      if (!enabled) clearZonePick();
+    },
+    [clearZonePick],
+  );
+
   const appendEvent = useCallback(
     async <T extends EventType>(eventType: T, teamId: string | null, playerId: string | null, payload: Record<string, unknown>) => {
       // Any new action means the tracker has moved on from the last shot, so
@@ -312,10 +333,11 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
       const recorded = await appendEvent(def.eventType, teamId, playerId, payload);
       haptic("tap");
 
-      // Field goals offer an optional "where from?" picker (skippable, times
-      // out on its own). The shot above is already recorded either way.
+      // With the advanced shot-zone option on, field goals offer an optional
+      // "where from?" picker (skippable, times out on its own). The shot above
+      // is already recorded either way.
       const shotPoints = (def.payload as { points?: number }).points;
-      if (playerId && (def.eventType === "shot_made" || def.eventType === "shot_missed") && (shotPoints === 2 || shotPoints === 3)) {
+      if (shotZonesEnabled && playerId && (def.eventType === "shot_made" || def.eventType === "shot_missed") && (shotPoints === 2 || shotPoints === 3)) {
         const jersey = bundle.jerseyByPlayer[playerId] ?? "?";
         const nickname = (bundle.players[playerId] as { nickname?: string } | undefined)?.nickname ?? "?";
         setZonePick({
@@ -333,7 +355,7 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
       const hint = contextualHighlightForEvent(def.eventType, teamId, opponentTeamId);
       triggerHighlight(hint);
     },
-    [appendEvent, haptic, triggerHighlight, clearZonePick, bundle.players, bundle.jerseyByPlayer, game.home_team_id, game.away_team_id],
+    [appendEvent, haptic, triggerHighlight, clearZonePick, shotZonesEnabled, bundle.players, bundle.jerseyByPlayer, game.home_team_id, game.away_team_id],
   );
 
   /** Tags the shot the picker is offering with where it was taken from (a separate event, so the shot itself is never delayed or edited). */
@@ -769,6 +791,8 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
     syncStatus,
     pendingCount,
     zonePick,
+    shotZonesEnabled,
+    setShotZonesEnabled,
     chooseShotZone,
     dismissZonePick: clearZonePick,
     tapCell,
