@@ -13,6 +13,7 @@ export const EVENT_TYPES = [
   "clock_stop",
   "shot_made",
   "shot_missed",
+  "shot_zone",
   "free_throw_made",
   "free_throw_missed",
   "rebound",
@@ -37,6 +38,16 @@ export type EventType = (typeof EVENT_TYPES)[number];
 const period = z.object({ period: z.number().int().positive() });
 const clockMs = z.object({ clock_ms: z.number().int().nonnegative() });
 const points = z.object({ points: z.union([z.literal(2), z.literal(3)]) });
+/**
+ * Tags an already-recorded shot with where it was taken from. A separate
+ * event (not a field on the shot) because events are append-only: the shot is
+ * recorded the instant it is tapped, and the optional zone arrives a moment
+ * later if the tracker picks one. See logic/shotZones.ts.
+ */
+const shotZonePayload = z.object({
+  shot_client_uuid: z.string(),
+  zone: z.enum(["paint", "mid_left", "mid_top", "mid_right", "corner_left", "wing_left", "top_key", "wing_right", "corner_right"]),
+});
 const reboundPayload = z.object({
   kind: z.enum(["offensive", "defensive"]),
   team_rebound: z.boolean(),
@@ -68,6 +79,7 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   clock_stop: empty,
   shot_made: points,
   shot_missed: points,
+  shot_zone: shotZonePayload,
   free_throw_made: empty,
   free_throw_missed: empty,
   rebound: reboundPayload,

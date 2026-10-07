@@ -19,5 +19,6 @@ export * from "./logic/seasonStats";
 export * from "./logic/standings";
 export * from "./logic/teamSeasonStats";
 export * from "./logic/gameLeaders";
+export * from "./logic/shotZones";
 
 export * from "./seed/seedData";

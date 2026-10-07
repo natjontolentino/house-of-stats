@@ -161,7 +161,8 @@ export function computeLiveGameState(input: {
     away: buildTeam(awayId),
     players,
     teams,
-    lastActions: events.slice(-3).reverse(),
+    // A zone tag annotates the shot before it; it isn't a play of its own.
+    lastActions: events.filter((e) => e.event_type !== "shot_zone").slice(-3).reverse(),
     isFinalized: input.game.status === "finalized",
   };
 }
