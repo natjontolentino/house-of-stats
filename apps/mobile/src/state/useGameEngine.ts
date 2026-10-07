@@ -21,6 +21,7 @@ import {
   type LiveGameState,
   type HighlightHint,
   type GameStatus,
+  type ShotZone,
 } from "@courtstats/shared";
 import {
   getEventsForGame,
@@ -31,6 +32,7 @@ import {
 import { pushUnsyncedEvents, type SyncStatus } from "../sync/syncEngine";
 import { STAT_CELLS, type StatCellKey } from "./statCells";
 import type { PromptState } from "./promptTypes";
+import { ZONE_PICK_TIMEOUT_MS, type ZonePick } from "./zonePick";
 import { isPracticeGameId } from "./practiceMode";
 import { supabase } from "../sync/supabaseClient";
 
@@ -53,6 +55,8 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
   const [selectedNameForSwap, setSelectedNameForSwap] = useState<{ teamId: string; playerId: string } | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("pending");
   const [pendingCount, setPendingCount] = useState(0);
+  const [zonePick, setZonePick] = useState<ZonePick | null>(null);
+  const zoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clockMsRef = useRef<number | null>(null);
   const clockRunningRef = useRef(false);
@@ -208,8 +212,18 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
   // "current max" and collide on the (game_id, sequence) unique constraint.
   const nextSequenceRef = useRef<number>(1);
 
+  const clearZonePick = useCallback(() => {
+    if (zoneTimerRef.current) clearTimeout(zoneTimerRef.current);
+    zoneTimerRef.current = null;
+    setZonePick(null);
+  }, []);
+
   const appendEvent = useCallback(
     async <T extends EventType>(eventType: T, teamId: string | null, playerId: string | null, payload: Record<string, unknown>) => {
+      // Any new action means the tracker has moved on from the last shot, so
+      // its optional zone picker is stale. (A zone tag itself clears it in
+      // chooseShotZone.)
+      if (eventType !== "shot_zone") clearZonePick();
       const sequence = nextSequenceRef.current++;
       const period = liveState?.currentPeriod ?? 1;
       const clock = settings.clock_mode === "off" ? null : clockMsRef.current;
@@ -250,7 +264,14 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
       }
       return newEvent;
     },
-    [gameId, deviceId, deviceToken, liveState?.currentPeriod, settings.clock_mode, stopClockLocally, isPractice],
+    [gameId, deviceId, deviceToken, liveState?.currentPeriod, settings.clock_mode, stopClockLocally, isPractice, clearZonePick],
+  );
+
+  useEffect(
+    () => () => {
+      if (zoneTimerRef.current) clearTimeout(zoneTimerRef.current);
+    },
+    [],
   );
 
   const findLastMatching = useCallback(
@@ -288,14 +309,43 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
         if (def.key === "reb_o" || def.key === "reb_d") payload.team_rebound = true;
         if (def.key === "to") payload.team_turnover = true;
       }
-      await appendEvent(def.eventType, teamId, playerId, payload);
+      const recorded = await appendEvent(def.eventType, teamId, playerId, payload);
       haptic("tap");
+
+      // Field goals offer an optional "where from?" picker (skippable, times
+      // out on its own). The shot above is already recorded either way.
+      const shotPoints = (def.payload as { points?: number }).points;
+      if (playerId && (def.eventType === "shot_made" || def.eventType === "shot_missed") && (shotPoints === 2 || shotPoints === 3)) {
+        const jersey = bundle.jerseyByPlayer[playerId] ?? "?";
+        const nickname = (bundle.players[playerId] as { nickname?: string } | undefined)?.nickname ?? "?";
+        setZonePick({
+          shotClientUuid: recorded.client_uuid,
+          teamId,
+          playerId,
+          points: shotPoints,
+          made: def.eventType === "shot_made",
+          playerLabel: `#${jersey} ${nickname}`,
+        });
+        zoneTimerRef.current = setTimeout(clearZonePick, ZONE_PICK_TIMEOUT_MS);
+      }
 
       const opponentTeamId = teamId === game.home_team_id ? game.away_team_id : game.home_team_id;
       const hint = contextualHighlightForEvent(def.eventType, teamId, opponentTeamId);
       triggerHighlight(hint);
     },
-    [appendEvent, haptic, triggerHighlight, game.home_team_id, game.away_team_id],
+    [appendEvent, haptic, triggerHighlight, clearZonePick, bundle.players, bundle.jerseyByPlayer, game.home_team_id, game.away_team_id],
+  );
+
+  /** Tags the shot the picker is offering with where it was taken from (a separate event, so the shot itself is never delayed or edited). */
+  const chooseShotZone = useCallback(
+    async (zone: ShotZone) => {
+      if (!zonePick) return;
+      const { shotClientUuid, teamId, playerId } = zonePick;
+      clearZonePick();
+      await appendEvent("shot_zone", teamId, playerId, { shot_client_uuid: shotClientUuid, zone });
+      haptic("tap");
+    },
+    [zonePick, appendEvent, clearZonePick, haptic],
   );
 
   /** Tapping a stat cell. Only on-court players and the Team row accept new entries (spec 6.5). */
@@ -718,6 +768,9 @@ export function useGameEngine(gameId: string, bundle: CachedGameBundle, deviceId
     selectedNameForSwap,
     syncStatus,
     pendingCount,
+    zonePick,
+    chooseShotZone,
+    dismissZonePick: clearZonePick,
     tapCell,
     longPressCell,
     tapWt,

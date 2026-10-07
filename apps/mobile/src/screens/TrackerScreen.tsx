@@ -9,6 +9,7 @@ import { TopBar } from "../components/TopBar";
 import { TeamGridHeader, TeamGridRows } from "../components/TeamGrid";
 import { TeamFoulAndTimeoutBar, CompactTeamFoulAndTimeoutBar } from "../components/TeamFoulAndTimeoutBar";
 import { PromptBar, PromptOverlay } from "../components/PromptBar";
+import { ShotZonePicker } from "../components/ShotZonePicker";
 import { LastActionsLine } from "../components/LastActionsLine";
 import { MinutesPeekPanel } from "../components/MinutesPeekPanel";
 import { ReviewScreen } from "./ReviewScreen";
@@ -167,6 +168,7 @@ export function TrackerScreen({
         )}
 
         <PromptOverlay engine={engine} />
+        <ShotZonePicker engine={engine} isTablet={isTablet} />
       </View>
 
       {isTablet ? (
