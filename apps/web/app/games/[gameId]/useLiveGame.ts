@@ -19,7 +19,9 @@ export function useLiveGame(
 ) {
   const [events, setEvents] = useState<GameEvent[]>(bundle.events);
   const [gameStatus, setGameStatus] = useState(bundle.game.status);
-  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date>(() => new Date());
+  // Null until the page has mounted: a time created during the server render would differ from the browser's and break hydration.
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
+  useEffect(() => setLastRefreshedAt(new Date()), []);
   const [refreshing, setRefreshing] = useState(false);
   const [, setTick] = useState(0);
   const supabaseRef = useRef(createSupabaseClient());
