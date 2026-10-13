@@ -168,31 +168,18 @@ export default async function AdminStreamCodesPage() {
                   )}
                 </form>
 
-                <form style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <input type="hidden" name="id" value={l.id} />
-                  {l.status === "active" ? (
-                    <button
-                      type="submit"
-                      name="status"
-                      value="revoked"
-                      formAction={setStreamCodeStatusAction}
-                      className="button-secondary"
-                      style={smallButton}
-                    >
-                      Switch off
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {/* Its own form with the new status in a hidden field: React overwrites the `name` of any
+                      button whose formAction is a server action, so a name/value on the button would be lost. */}
+                  <form action={setStreamCodeStatusAction}>
+                    <input type="hidden" name="id" value={l.id} />
+                    <input type="hidden" name="status" value={l.status === "active" ? "revoked" : "active"} />
+                    <button type="submit" className="button-secondary" style={smallButton}>
+                      {l.status === "active" ? "Switch off" : "Switch back on"}
                     </button>
-                  ) : (
-                    <button
-                      type="submit"
-                      name="status"
-                      value="active"
-                      formAction={setStreamCodeStatusAction}
-                      className="button-secondary"
-                      style={smallButton}
-                    >
-                      Switch back on
-                    </button>
-                  )}
+                  </form>
+                  <form style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <input type="hidden" name="id" value={l.id} />
                   {l.installation_id && (
                     <ConfirmButton
                       message={`Release ${l.code} from "${l.device_label ?? "this phone"}"? That phone loses access at its next check, and the code can then be activated on a new phone.`}
@@ -209,7 +196,8 @@ export default async function AdminStreamCodesPage() {
                   >
                     Delete
                   </ConfirmButton>
-                </form>
+                  </form>
+                </div>
               </div>
             );
           })}
