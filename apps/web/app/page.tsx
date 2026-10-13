@@ -7,6 +7,7 @@ import { Footer } from "../components/Footer";
 import { fetchSeasonStats } from "../lib/seasonData";
 import { fetchLeagueSummaries, rankLeaguesByRecentPlay } from "../lib/leagueSummary";
 import { fetchLiveGames } from "../lib/liveGames";
+import { fetchHomeFeed } from "../lib/homeFeed";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export const dynamic = "force-dynamic";
  * deliberately left out per the user's own call to scrap it for now.
  */
 export default async function HomePage() {
-  const [leagues, liveGames] = await Promise.all([fetchLeagueSummaries(), fetchLiveGames()]);
+  const [leagues, liveGames, feed] = await Promise.all([fetchLeagueSummaries(), fetchLiveGames(), fetchHomeFeed()]);
   const ranked = await rankLeaguesByRecentPlay(leagues);
   // Stats for the few most recently active leagues, then those with real leaders first: a league whose
   // "finished" game has no recorded plays (or none at all) must not take a slot with empty leaders.
@@ -31,8 +32,8 @@ export default async function HomePage() {
 
   return (
     <>
-      <HeroSection liveCount={liveCount} />
-      <LiveNowSection games={liveGames} />
+      <HeroSection liveCount={liveCount} spotlight={feed.spotlight} />
+      <LiveNowSection games={liveGames} recent={feed.recent} />
       <LeaguesSection leagues={leagues} />
       <HomeLeadersSection blocks={leaderBlocks} hasMoreLeagues={ranked.length > leaderBlocks.length} />
       <PlayerLookupSection />
