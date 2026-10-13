@@ -1,15 +1,9 @@
 import Link from "next/link";
-import type { LiveGameSummary } from "../../lib/liveGames";
-import type { FeedGame } from "../../lib/homeFeed";
+import type { FeedGame } from "../../lib/feedBuilder";
+import type { LiveFeedGame } from "../../lib/liveFeed";
 import { BasketballBackground } from "./BasketballBackground";
 import { TeamBadge } from "./SpotlightCard";
-
-function updatedAgo(date: Date | null): string {
-  if (!date) return "no updates yet";
-  const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
-  if (seconds < 60) return `${seconds}s ago`;
-  return `${Math.round(seconds / 60)} min ago`;
-}
+import { PlayerAvatar } from "../PlayerAvatar";
 
 const dayFormat = new Intl.DateTimeFormat("en-PH", { month: "short", day: "numeric", timeZone: "Asia/Manila" });
 
@@ -43,7 +37,50 @@ function ResultsStrip({ games }: { games: FeedGame[] }) {
   );
 }
 
-export function LiveNowSection({ games, recent }: { games: LiveGameSummary[]; recent: FeedGame[] }) {
+/** One live game, in the same dark scoreboard style as the hero card. */
+export function LiveTile({ game }: { game: LiveFeedGame }) {
+  const leading = game.away.score === game.home.score ? null : game.away.score > game.home.score ? "away" : "home";
+  return (
+    <article className="live-tile">
+      <div className="live-tile__top">
+        <span className={`live-tile__status${game.delayed ? " live-tile__status--delayed" : ""}`}>
+          <span className="live-tile__dot" />
+          {[game.delayed ? "Delayed" : "Live", game.periodLabel, game.clock].filter(Boolean).join(" · ")}
+        </span>
+        <span className="live-tile__where">{[game.courtLabel, game.league.name].filter(Boolean).join(" · ")}</span>
+      </div>
+
+      {(["away", "home"] as const).map((side) => {
+        const team = game[side];
+        return (
+          <div className={`live-tile__row${leading && leading !== side ? " live-tile__row--behind" : ""}`} key={side}>
+            <TeamBadge team={team} size={34} />
+            <span className="live-tile__name">{team.name}</span>
+            <span className="live-tile__score">{team.score}</span>
+          </div>
+        );
+      })}
+
+      {game.performer && (
+        <Link href={`/players/${game.performer.playerId}`} className="live-tile__performer">
+          <PlayerAvatar name={game.performer.fullName} photoUrl={game.performer.photoUrl} size={30} />
+          <span>
+            <strong>{game.performer.name}</strong> <span className="live-tile__line">{game.performer.line}</span>
+          </span>
+        </Link>
+      )}
+
+      <div className="live-tile__foot">
+        <Link href={`/games/${game.gameId}`}>Box score</Link>
+        <Link href={`/games/${game.gameId}/live`} className="live-tile__foot-primary">
+          Live scoreboard →
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+export function LiveNowSection({ games, recent }: { games: LiveFeedGame[]; recent: FeedGame[] }) {
   const anyLive = games.length > 0;
 
   return (
@@ -52,34 +89,21 @@ export function LiveNowSection({ games, recent }: { games: LiveGameSummary[]; re
       <div className="wide-page">
         <div className="section-band__head">
           <h2 className="section-band__title">{anyLive ? "Live now" : "Latest results"}</h2>
-          <Link href="/schedule" className="section-band__link">
-            All games and schedule →
-          </Link>
+          {games.length > 1 ? (
+            <Link href="/live" className="section-band__link">
+              Watch all {games.length} games →
+            </Link>
+          ) : (
+            <Link href="/schedule" className="section-band__link">
+              All games and schedule →
+            </Link>
+          )}
         </div>
 
         {anyLive && (
           <div className="live-grid">
             {games.map((g) => (
-              <div className="live-card" key={g.gameId}>
-                <div className="live-card__status-row">
-                  <span className={`live-card__status live-card__status--${g.status}`}>
-                    {g.status === "live" ? "Live" : "Delayed"} · {g.periodLabel}
-                  </span>
-                  <span className="live-card__updated">Updated {updatedAgo(g.updatedAt)}</span>
-                </div>
-                <div className="live-card__team-row">
-                  <span>{g.awayTeam}</span>
-                  <span className="live-card__score">{g.awayScore}</span>
-                </div>
-                <div className="live-card__team-row">
-                  <span>{g.homeTeam}</span>
-                  <span className="live-card__score">{g.homeScore}</span>
-                </div>
-                <div className="live-card__foot">
-                  <span>{[g.leagueName, g.courtLabel].filter(Boolean).join(" · ")}</span>
-                  <Link href={`/games/${g.gameId}`}>Box score</Link>
-                </div>
-              </div>
+              <LiveTile key={g.gameId} game={g} />
             ))}
           </div>
         )}

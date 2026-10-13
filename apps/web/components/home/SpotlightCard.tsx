@@ -1,7 +1,6 @@
 import Link from "next/link";
-import type { FeedTeam, Spotlight } from "../../lib/homeFeed";
+import type { FeedGame, FeedTeam } from "../../lib/feedBuilder";
 import { PlayerAvatar } from "../PlayerAvatar";
-import { AutoRefresh } from "./AutoRefresh";
 
 /** A team's logo, or its short name in a circle when it hasn't uploaded one, so the card never looks half empty. */
 export function TeamBadge({ team, size }: { team: FeedTeam; size: number }) {
@@ -37,8 +36,8 @@ function TeamColumn({ team, dim }: { team: FeedTeam; dim: boolean }) {
   );
 }
 
-/** The hero's feature card: the live game, or the most recent final when nothing is on. */
-export function SpotlightCard({ game }: { game: Spotlight }) {
+/** The hero's feature card: a live game, or the most recent final when nothing is on. */
+export function SpotlightCard({ game, clock }: { game: FeedGame; clock?: string | null }) {
   const live = game.status === "live";
   const final = !live;
   const awayWon = final && game.away.score > game.home.score;
@@ -46,14 +45,12 @@ export function SpotlightCard({ game }: { game: Spotlight }) {
 
   return (
     <article className="spotlight" aria-label={live ? "Live game" : "Latest result"}>
-      {live && <AutoRefresh intervalMs={20_000} />}
-
       <div className="spotlight__top">
         <span className={`spotlight__status spotlight__status--${game.status}`}>
           <span className="spotlight__dot" />
-          {live ? `Live · ${game.periodLabel}` : "Final"}
+          {live ? ["Live", game.periodLabel, clock].filter(Boolean).join(" · ") : "Final"}
         </span>
-        <span className="spotlight__league">{game.league.name}</span>
+        <span className="spotlight__league">{[game.league.name, game.courtLabel].filter(Boolean).join(" · ")}</span>
       </div>
 
       <div className="spotlight__board">

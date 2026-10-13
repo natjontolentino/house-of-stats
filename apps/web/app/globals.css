@@ -441,88 +441,6 @@ tbody tr:hover {
   gap: 16px;
 }
 
-.live-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px;
-  box-shadow: var(--shadow-sm);
-}
-
-.live-card__status-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.live-card__status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.live-card__status::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: currentColor;
-}
-
-.live-card__status--live {
-  color: var(--red);
-}
-
-.live-card__status--live::before {
-  animation: pulse 1.4s ease-in-out infinite;
-}
-
-.live-card__status--delayed {
-  color: var(--muted-light);
-}
-
-.live-card__updated {
-  font-size: 11.5px;
-  color: var(--muted-light);
-}
-
-.live-card__team-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.live-card__score {
-  font-size: 18px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
-.live-card__foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.live-card__foot a {
-  color: var(--accent-dark);
-  font-weight: 700;
-  text-decoration: none;
-}
-
 /* Leagues */
 
 .league-grid {
@@ -1350,12 +1268,10 @@ tbody tr:hover {
 }
 
 /* Gentle lift on the existing cards so the page feels alive. */
-.league-card,
-.live-card {
+.league-card {
   transition: transform 0.2s, box-shadow 0.2s;
 }
-.league-card:hover,
-.live-card:hover {
+.league-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
 }
@@ -1387,9 +1303,188 @@ tbody tr:hover {
   }
   .spotlight__status--live .spotlight__dot,
   .league-card,
-  .live-card,
   .result-card {
     animation: none;
     transition: none;
+  }
+}
+
+/* ---- Home: several games at once ---- */
+.live-spotlight {
+  min-width: 0;
+}
+.live-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.live-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.live-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.live-chip--on {
+  border-color: var(--accent);
+  background: rgba(215, 90, 44, 0.22);
+  color: white;
+}
+.live-chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.live-chip__score {
+  flex: none;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.live-chips__all {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Live game tiles: the hero card's dark scoreboard style, on the light band. */
+.live-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px 14px;
+  border-radius: var(--radius);
+  background: linear-gradient(160deg, var(--navy), #12121f);
+  box-shadow: var(--shadow-md);
+  color: white;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.live-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px rgba(26, 26, 46, 0.35);
+}
+.live-tile__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.live-tile__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(240, 70, 70, 0.2);
+  color: #ff8a8a;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.live-tile__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff5a5a;
+  animation: spotlight-pulse 1.2s ease-in-out infinite;
+}
+.live-tile__status--delayed {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.65);
+}
+.live-tile__status--delayed .live-tile__dot {
+  background: rgba(255, 255, 255, 0.5);
+  animation: none;
+}
+.live-tile__where {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.live-tile__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.live-tile__row--behind {
+  opacity: 0.7;
+}
+.live-tile__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.live-tile__score {
+  font-size: 30px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.live-tile__performer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+  color: inherit;
+  font-size: 13px;
+  text-decoration: none;
+}
+.live-tile__line {
+  color: rgba(255, 255, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+.live-tile__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.live-tile__foot a {
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+}
+.live-tile__foot a:hover {
+  color: white;
+}
+.live-tile__foot .live-tile__foot-primary {
+  color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-tile,
+  .live-chip {
+    transition: none;
+  }
+  .live-tile__dot {
+    animation: none;
   }
 }

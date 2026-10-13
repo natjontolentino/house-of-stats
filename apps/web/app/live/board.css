@@ -1,0 +1,343 @@
+/* /live: every live game on one screen. Reuses the .live-root theme from the single-game scoreboard. */
+
+.board-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+  align-content: start;
+  width: 100%;
+  max-width: 1700px;
+  margin: 0 auto;
+  padding: 16px;
+}
+/* On wide screens, pick the column count from how many games there are, so team names always have room next to the big scores. */
+@media (min-width: 1100px) {
+  .board-grid[data-count="1"] {
+    grid-template-columns: minmax(0, 860px);
+    justify-content: center;
+  }
+  .board-grid[data-count="2"],
+  .board-grid[data-count="4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .board-grid[data-count="3"],
+  .board-grid[data-count="5"],
+  .board-grid[data-count="6"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.board-tile {
+  --b-court: 30px;
+  --b-period: 30px;
+  --b-time: 40px;
+  --b-name: 26px;
+  --b-score: 88px;
+  --b-gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--b-gap);
+  padding: 18px 20px 16px;
+  border: 1px solid var(--live-border2);
+  border-radius: 16px;
+  background: linear-gradient(165deg, var(--live-card), var(--live-surface));
+}
+.board-tile__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.board-tile__where {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.board-tile__court {
+  overflow: hidden;
+  font-family: var(--live-font-display), sans-serif;
+  font-size: var(--b-court);
+  letter-spacing: 2px;
+  line-height: 1;
+  color: var(--live-gold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.board-tile__league {
+  margin-top: 4px;
+  overflow: hidden;
+  font-family: var(--live-font-cond), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--live-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.board-tile__status {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(240, 90, 90, 0.45);
+  background: rgba(240, 90, 90, 0.15);
+  color: var(--live-away);
+  font-family: var(--live-font-cond), sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.board-tile__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--live-away);
+  animation: live-pulse 1.2s ease-in-out infinite;
+}
+.board-tile__status--delayed {
+  border-color: var(--live-border2);
+  background: rgba(138, 138, 184, 0.12);
+  color: var(--live-muted2);
+}
+.board-tile__status--delayed .board-tile__dot {
+  background: var(--live-muted);
+  animation: none;
+}
+.board-tile__clock {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 14px;
+  padding: 6px 0;
+  border-top: 1px solid var(--live-border);
+  border-bottom: 1px solid var(--live-border);
+  font-family: var(--live-font-display), sans-serif;
+}
+.board-tile__period {
+  font-size: var(--b-period);
+  letter-spacing: 3px;
+  color: var(--live-muted2);
+}
+.board-tile__time {
+  font-size: var(--b-time);
+  letter-spacing: 3px;
+  color: var(--live-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.board-mark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.board-mark--logo {
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.92);
+  object-fit: contain;
+}
+.board-mark--text {
+  border: 1px solid var(--live-border2);
+  background: linear-gradient(145deg, #2a2a45, #1b1b30);
+  color: var(--live-text);
+  font-family: var(--live-font-cond), sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.board-team {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.board-team__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  gap: 6px;
+}
+.board-team__name {
+  overflow: hidden;
+  font-family: var(--live-font-cond), sans-serif;
+  font-size: var(--b-name);
+  font-weight: 700;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.board-team--home .board-team__name {
+  color: var(--live-home);
+}
+.board-team--away .board-team__name {
+  color: var(--live-away);
+}
+.board-team__score {
+  font-family: var(--live-font-display), sans-serif;
+  font-size: var(--b-score);
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+.board-team--home .board-team__score {
+  color: var(--live-home);
+}
+.board-team--away .board-team__score {
+  color: var(--live-away);
+}
+.board-team--behind {
+  opacity: 0.78;
+}
+.board-team__fouls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.board-fouls {
+  display: inline-flex;
+  gap: 5px;
+}
+.board-foul {
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--live-border2);
+  border-radius: 50%;
+  background: var(--live-card);
+}
+.board-foul--on {
+  border-color: var(--live-gold);
+  background: var(--live-gold);
+}
+.board-foul--penalty {
+  border-color: var(--live-away);
+  background: var(--live-away);
+}
+.board-team__penalty {
+  color: var(--live-away);
+  font-family: var(--live-font-cond), sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.board-tile__performer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  font-family: var(--live-font-cond), sans-serif;
+  font-size: 16px;
+}
+.board-tile__performer strong {
+  display: block;
+  font-size: 17px;
+}
+.board-tile__line {
+  color: var(--live-muted2);
+  font-size: 14px;
+}
+.board-tile__open {
+  margin-top: auto;
+  color: var(--live-gold);
+  font-family: var(--live-font-cond), sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+}
+.board-tile__open:hover {
+  text-decoration: underline;
+}
+
+.board-recent {
+  width: 100%;
+  max-width: 560px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.board-recent li {
+  border-top: 1px solid var(--live-border);
+}
+.board-recent a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 4px;
+  text-decoration: none;
+}
+.board-recent__teams {
+  font-family: var(--live-font-cond), sans-serif;
+  font-size: 19px;
+}
+.board-recent__league {
+  color: var(--live-muted);
+  font-family: var(--live-font-cond), sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* TV: scale up so it reads from across the room -- a bit less when 4+ games must share one screen. */
+@media (min-width: 1100px) {
+  .board-grid[data-count="4"] .board-tile,
+  .board-grid[data-count="5"] .board-tile,
+  .board-grid[data-count="6"] .board-tile {
+    --b-court: 26px;
+    --b-period: 24px;
+    --b-time: 32px;
+    --b-name: 22px;
+    --b-score: 72px;
+    --b-gap: 9px;
+    padding: 14px 18px 12px;
+  }
+}
+@media (min-width: 1500px) {
+  .board-grid {
+    gap: 22px;
+    padding: 24px;
+  }
+  .board-grid[data-count="1"] .board-tile,
+  .board-grid[data-count="2"] .board-tile,
+  .board-grid[data-count="3"] .board-tile {
+    --b-court: 40px;
+    --b-period: 34px;
+    --b-time: 56px;
+    --b-name: 34px;
+    --b-score: 120px;
+    padding: 24px 28px 20px;
+  }
+  .board-grid[data-count="4"] .board-tile,
+  .board-grid[data-count="5"] .board-tile,
+  .board-grid[data-count="6"] .board-tile {
+    --b-court: 32px;
+    --b-period: 28px;
+    --b-time: 40px;
+    --b-name: 26px;
+    --b-score: 88px;
+    --b-gap: 11px;
+  }
+  .board-foul {
+    width: 14px;
+    height: 14px;
+  }
+}
+@media (max-width: 480px) {
+  .board-team__score {
+    font-size: 68px;
+  }
+  .board-team__name {
+    font-size: 21px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .board-tile__dot {
+    animation: none;
+  }
+}

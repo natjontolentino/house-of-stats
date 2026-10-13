@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { fetchHomeFeed } from "./homeFeed";
+import { fetchLiveFeed } from "./liveFeed";
 import { fetchLeagueSummaries } from "./leagueSummary";
 import { fetchSeasonStats } from "./seasonData";
 
@@ -15,6 +16,9 @@ import { fetchSeasonStats } from "./seasonData";
 
 /** The hero spotlight and results strip; short, since a live score should keep moving. */
 export const getHomeFeed = unstable_cache(fetchHomeFeed, ["home-feed"], { revalidate: 20 });
+
+/** Every live game; very short, since scores should keep moving. */
+export const getLiveFeed = unstable_cache(fetchLiveFeed, ["home-live-feed"], { revalidate: 10 });
 
 export const getLeagueSummaries = unstable_cache(fetchLeagueSummaries, ["home-league-summaries"], { revalidate: 60 });
 

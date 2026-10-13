@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Logo } from "./Logo";
 
 const NAV_LINKS = [
-  { href: "/", label: "Live" },
+  { href: "/live", label: "Live" },
   { href: "/#leagues", label: "Leagues" },
   { href: "/players", label: "Players" },
   { href: "/#leaders", label: "Leaderboards" },
