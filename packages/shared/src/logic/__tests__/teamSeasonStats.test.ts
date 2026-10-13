@@ -81,4 +81,13 @@ describe("computeTeamSeasonStats", () => {
     expect(rows.find((r) => r.teamId === "A")?.pointsPerGame).toBe(15);
     expect(rows.find((r) => r.teamId === "B")?.pointsPerGame).toBe(30);
   });
+
+  it("averages three-pointers made per game", () => {
+    const [a] = computeTeamSeasonStats([
+      game({ gameId: "g1", threePointMade: 6, threePointAttempted: 20 }),
+      game({ gameId: "g2", threePointMade: 9, threePointAttempted: 20 }),
+    ]);
+    expect(a.threePointMadePerGame).toBe(7.5);
+    expect(a.threePointPct).toBeCloseTo(15 / 40);
+  });
 });

@@ -33,6 +33,7 @@ export interface TeamSeasonLine {
   blocksPerGame: number;
   turnoversPerGame: number;
   personalFoulsPerGame: number;
+  threePointMadePerGame: number;
   /** Percentages come from summed makes/attempts across games, never an average of per-game percentages. */
   fieldGoalPct: number | null;
   threePointPct: number | null;
@@ -94,6 +95,7 @@ export function computeTeamSeasonStats(games: TeamGameTotals[]): TeamSeasonLine[
       blocksPerGame: blocks / n,
       turnoversPerGame: turnovers / n,
       personalFoulsPerGame: fouls / n,
+      threePointMadePerGame: tpm / n,
       fieldGoalPct: pct(fgm, fga),
       threePointPct: pct(tpm, tpa),
       ftPct: pct(ftm, fta),

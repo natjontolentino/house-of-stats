@@ -12,9 +12,10 @@ export interface LeagueSummary {
 }
 
 /**
- * Leagues ordered by who played most recently, so the league with the latest
- * game (live or finished) is first. Leagues that haven't played yet keep
- * their original order, after all the ones that have.
+ * Leagues ordered for the home page's leaders: those with at least one
+ * finished game come first, newest play (live or finished) first. Leagues with
+ * no finished game yet -- nothing to show leaders for -- go to the bottom, in
+ * their original order.
  */
 export async function rankLeaguesByRecentPlay(summaries: LeagueSummary[]): Promise<LeagueSummary[]> {
   const seasonIds = summaries.map((s) => s.seasonId).filter((id): id is string => !!id);
@@ -23,7 +24,7 @@ export async function rankLeaguesByRecentPlay(summaries: LeagueSummary[]): Promi
   const supabase = createSupabaseClient();
   const { data } = await supabase
     .from("game")
-    .select("season_id, scheduled_at")
+    .select("season_id, scheduled_at, status")
     .in("season_id", seasonIds)
     .in("status", ["in_progress", "finalized"])
     .order("scheduled_at", { ascending: false })
@@ -31,13 +32,21 @@ export async function rankLeaguesByRecentPlay(summaries: LeagueSummary[]): Promi
 
   // Newest first, so the first row seen for a season is its most recent game.
   const lastPlayed = new Map<string, string>();
+  const hasFinished = new Set<string>();
   for (const row of data ?? []) {
     if (!lastPlayed.has(row.season_id)) lastPlayed.set(row.season_id, row.scheduled_at);
+    if (row.status === "finalized") hasFinished.add(row.season_id);
   }
 
   return summaries
-    .map((league, index) => ({ league, index, playedAt: league.seasonId ? lastPlayed.get(league.seasonId) : undefined }))
+    .map((league, index) => ({
+      league,
+      index,
+      finished: league.seasonId ? hasFinished.has(league.seasonId) : false,
+      playedAt: league.seasonId ? lastPlayed.get(league.seasonId) : undefined,
+    }))
     .sort((a, b) => {
+      if (a.finished !== b.finished) return a.finished ? -1 : 1;
       if (a.playedAt && b.playedAt) return a.playedAt < b.playedAt ? 1 : a.playedAt > b.playedAt ? -1 : a.index - b.index;
       if (a.playedAt) return -1;
       if (b.playedAt) return 1;
