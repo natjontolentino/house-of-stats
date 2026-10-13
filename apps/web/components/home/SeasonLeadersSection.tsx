@@ -48,12 +48,10 @@ export function SeasonLeadersSection({
   players,
   playersById,
   settings,
-  leagueName,
 }: {
   players: PlayerSeasonLine[];
   playersById: Record<string, Player>;
   settings: Parameters<typeof displayPlayerName>[1];
-  leagueName?: string;
 }) {
   const categories: LeaderCategory[] = [
     {
@@ -76,7 +74,7 @@ export function SeasonLeadersSection({
     <section id="leaders" className="section-band leaders-band">
       <div className="wide-page">
         <div className="section-band__head">
-          <h2 className="section-band__title">Season leaders{leagueName ? ` · ${leagueName}` : ""}</h2>
+          <h2 className="section-band__title">Season leaders</h2>
         </div>
 
         {!hasData ? (

@@ -913,3 +913,104 @@ tbody tr:hover {
     font-size: 21px;
   }
 }
+
+/* ---- Home: season leaders, one block per league ---- */
+.home-leaders__note {
+  color: var(--muted);
+  font-size: 13px;
+}
+.home-leaders {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.home-leaders__league {
+  background: var(--panel);
+  border-radius: var(--radius);
+  border-top: 3px solid var(--accent);
+  box-shadow: var(--shadow-sm);
+  padding: 18px 20px 20px;
+}
+.home-leaders__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+}
+.home-leaders__name {
+  display: inline-block;
+  padding: 6px 14px;
+  border: 1.5px solid var(--navy);
+  border-radius: 6px;
+  color: var(--navy);
+  font-size: 15px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.home-leaders__name:hover {
+  background: var(--navy);
+  color: white;
+}
+.home-leaders__more {
+  color: var(--accent-dark);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.home-leaders__more:hover {
+  text-decoration: underline;
+}
+.home-leaders__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 18px 24px;
+}
+.home-leader__label {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.home-leader__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.home-leader__who {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+.home-leader__name {
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.home-leader__who:hover .home-leader__name {
+  color: var(--accent-dark);
+}
+.home-leader__value {
+  flex: none;
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.home-leader__empty {
+  color: var(--muted-light);
+}
+.home-leaders__none {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.home-leaders__all {
+  display: inline-block;
+  margin-top: 18px;
+}

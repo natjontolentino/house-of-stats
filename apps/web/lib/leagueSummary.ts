@@ -11,19 +11,39 @@ export interface LeagueSummary {
   teamCount: number;
 }
 
-/** The season whose games most recently started or finished across the given leagues -- what the home page's leaders should reflect. */
-export async function fetchFeaturedSeasonId(summaries: LeagueSummary[]): Promise<string | null> {
+/**
+ * Leagues ordered by who played most recently, so the league with the latest
+ * game (live or finished) is first. Leagues that haven't played yet keep
+ * their original order, after all the ones that have.
+ */
+export async function rankLeaguesByRecentPlay(summaries: LeagueSummary[]): Promise<LeagueSummary[]> {
   const seasonIds = summaries.map((s) => s.seasonId).filter((id): id is string => !!id);
-  if (seasonIds.length === 0) return null;
+  if (seasonIds.length === 0) return summaries;
+
   const supabase = createSupabaseClient();
   const { data } = await supabase
     .from("game")
-    .select("season_id")
+    .select("season_id, scheduled_at")
     .in("season_id", seasonIds)
     .in("status", ["in_progress", "finalized"])
     .order("scheduled_at", { ascending: false })
-    .limit(1);
-  return data?.[0]?.season_id ?? seasonIds[0];
+    .limit(500);
+
+  // Newest first, so the first row seen for a season is its most recent game.
+  const lastPlayed = new Map<string, string>();
+  for (const row of data ?? []) {
+    if (!lastPlayed.has(row.season_id)) lastPlayed.set(row.season_id, row.scheduled_at);
+  }
+
+  return summaries
+    .map((league, index) => ({ league, index, playedAt: league.seasonId ? lastPlayed.get(league.seasonId) : undefined }))
+    .sort((a, b) => {
+      if (a.playedAt && b.playedAt) return a.playedAt < b.playedAt ? 1 : a.playedAt > b.playedAt ? -1 : a.index - b.index;
+      if (a.playedAt) return -1;
+      if (b.playedAt) return 1;
+      return a.index - b.index;
+    })
+    .map((x) => x.league);
 }
 
 /**
