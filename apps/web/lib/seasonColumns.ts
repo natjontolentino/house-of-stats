@@ -12,7 +12,7 @@ const one = (v: number) => v.toFixed(1);
 const pct = (v: number | null) => (v === null ? "-" : `${(v * 100).toFixed(1)}%`);
 const signed = (v: number) => (v > 0 ? `+${v.toFixed(1)}` : v.toFixed(1));
 
-/** Season averages for players. Every per-game figure comes from computePlayerSeasonStats. */
+/** Season averages for players (3PM is the one season total). Every figure comes from computePlayerSeasonStats. */
 export const PLAYER_COLUMNS: StatColumn<PlayerSeasonLine>[] = [
   { key: "gp", label: "GP", sortValue: (p) => p.gamesPlayed, format: (p) => String(p.gamesPlayed) },
   {
@@ -28,7 +28,7 @@ export const PLAYER_COLUMNS: StatColumn<PlayerSeasonLine>[] = [
   { key: "blk", label: "BLK", sortValue: (p) => p.blocksPerGame, format: (p) => one(p.blocksPerGame) },
   { key: "to", label: "TO", sortValue: (p) => p.turnoversPerGame, format: (p) => one(p.turnoversPerGame) },
   { key: "fg", label: "FG%", sortValue: (p) => p.fieldGoalPct ?? -1, format: (p) => pct(p.fieldGoalPct) },
-  { key: "3pm", label: "3PM", sortValue: (p) => p.threePointMadePerGame, format: (p) => one(p.threePointMadePerGame) },
+  { key: "3pm", label: "3PM", sortValue: (p) => p.threePointMade, format: (p) => String(p.threePointMade) },
   { key: "3p", label: "3P%", sortValue: (p) => p.threePointPct ?? -1, format: (p) => pct(p.threePointPct) },
   { key: "ft", label: "FT%", sortValue: (p) => p.ftPct ?? -1, format: (p) => pct(p.ftPct) },
   { key: "eff", label: "EFF", sortValue: (p) => p.efficiencyPerGame, format: (p) => one(p.efficiencyPerGame) },
@@ -48,7 +48,7 @@ export const TEAM_COLUMNS: StatColumn<TeamSeasonLine>[] = [
   { key: "to", label: "TO", sortValue: (t) => t.turnoversPerGame, format: (t) => one(t.turnoversPerGame) },
   { key: "pf", label: "PF", sortValue: (t) => t.personalFoulsPerGame, format: (t) => one(t.personalFoulsPerGame) },
   { key: "fg", label: "FG%", sortValue: (t) => t.fieldGoalPct ?? -1, format: (t) => pct(t.fieldGoalPct) },
-  { key: "3pm", label: "3PM", sortValue: (t) => t.threePointMadePerGame, format: (t) => one(t.threePointMadePerGame) },
+  { key: "3pm", label: "3PM", sortValue: (t) => t.threePointMade, format: (t) => String(t.threePointMade) },
   { key: "3p", label: "3P%", sortValue: (t) => t.threePointPct ?? -1, format: (t) => pct(t.threePointPct) },
   { key: "ft", label: "FT%", sortValue: (t) => t.ftPct ?? -1, format: (t) => pct(t.ftPct) },
   { key: "eff", label: "EFF", sortValue: (t) => t.efficiencyPerGame, format: (t) => one(t.efficiencyPerGame) },

@@ -64,7 +64,7 @@ export function renderSeasonSummaryHtml(input: {
     </table>
 
     <p style="color:#666;font-size:9.5px;margin-top:10px">
-      GP = games played. MIN shows a dash when the league ran without a game clock. Percentages are total makes over total attempts.
+      GP = games played. 3PM is the season total of three-pointers made, not a per-game average. MIN shows a dash when the league ran without a game clock. Percentages are total makes over total attempts.
       EFF = (PTS + REB + AST + STL + BLK) − missed FG − missed FT − TO, per game.
     </p>
   </body>
