@@ -4,10 +4,9 @@ import { LeaguesSection } from "../components/home/LeaguesSection";
 import { HomeLeadersSection } from "../components/home/HomeLeadersSection";
 import { PlayerLookupSection } from "../components/home/PlayerLookupSection";
 import { Footer } from "../components/Footer";
-import { fetchSeasonStats } from "../lib/seasonData";
-import { fetchLeagueSummaries, rankLeaguesByRecentPlay } from "../lib/leagueSummary";
+import { rankLeaguesByRecentPlay } from "../lib/leagueSummary";
 import { fetchLiveGames } from "../lib/liveGames";
-import { fetchHomeFeed } from "../lib/homeFeed";
+import { getHomeFeed, getLeagueSummaries, getSeasonStats } from "../lib/homeCache";
 
 export const dynamic = "force-dynamic";
 
@@ -19,12 +18,12 @@ export const dynamic = "force-dynamic";
  * deliberately left out per the user's own call to scrap it for now.
  */
 export default async function HomePage() {
-  const [leagues, liveGames, feed] = await Promise.all([fetchLeagueSummaries(), fetchLiveGames(), fetchHomeFeed()]);
+  const [leagues, liveGames, feed] = await Promise.all([getLeagueSummaries(), fetchLiveGames(), getHomeFeed()]);
   const ranked = await rankLeaguesByRecentPlay(leagues);
   // Stats for the few most recently active leagues, then those with real leaders first: a league whose
   // "finished" game has no recorded plays (or none at all) must not take a slot with empty leaders.
   const candidates = await Promise.all(
-    ranked.slice(0, 6).map(async (league) => ({ league, stats: league.seasonId ? await fetchSeasonStats(league.seasonId) : null })),
+    ranked.slice(0, 6).map(async (league) => ({ league, stats: league.seasonId ? await getSeasonStats(league.seasonId) : null })),
   );
   const hasLeaders = (block: (typeof candidates)[number]) => (block.stats?.players.length ?? 0) > 0;
   const leaderBlocks = [...candidates.filter(hasLeaders), ...candidates.filter((b) => !hasLeaders(b))].slice(0, 3);
