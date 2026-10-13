@@ -20,10 +20,13 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const [leagues, liveGames] = await Promise.all([fetchLeagueSummaries(), fetchLiveGames()]);
   const ranked = await rankLeaguesByRecentPlay(leagues);
-  const featuredLeagues = ranked.slice(0, 3);
-  const leaderBlocks = await Promise.all(
-    featuredLeagues.map(async (league) => ({ league, stats: league.seasonId ? await fetchSeasonStats(league.seasonId) : null })),
+  // Stats for the few most recently active leagues, then those with real leaders first: a league whose
+  // "finished" game has no recorded plays (or none at all) must not take a slot with empty leaders.
+  const candidates = await Promise.all(
+    ranked.slice(0, 6).map(async (league) => ({ league, stats: league.seasonId ? await fetchSeasonStats(league.seasonId) : null })),
   );
+  const hasLeaders = (block: (typeof candidates)[number]) => (block.stats?.players.length ?? 0) > 0;
+  const leaderBlocks = [...candidates.filter(hasLeaders), ...candidates.filter((b) => !hasLeaders(b))].slice(0, 3);
   const liveCount = liveGames.filter((g) => g.status === "live").length;
 
   return (
@@ -31,7 +34,7 @@ export default async function HomePage() {
       <HeroSection liveCount={liveCount} />
       <LiveNowSection games={liveGames} />
       <LeaguesSection leagues={leagues} />
-      <HomeLeadersSection blocks={leaderBlocks} hasMoreLeagues={ranked.length > featuredLeagues.length} />
+      <HomeLeadersSection blocks={leaderBlocks} hasMoreLeagues={ranked.length > leaderBlocks.length} />
       <PlayerLookupSection />
       <Footer />
     </>
