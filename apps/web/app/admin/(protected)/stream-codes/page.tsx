@@ -22,6 +22,7 @@ interface StreamLicense {
   id: string;
   code: string;
   label: string;
+  product: "hoops" | "pickle";
   league_id: string | null;
   expires_at: string | null;
   status: "active" | "revoked";
@@ -59,7 +60,8 @@ export default async function AdminStreamCodesPage() {
     <main className="page" style={{ maxWidth: 760 }}>
       <h1 style={{ fontSize: 22, margin: "4px 0 4px" }}>Stream codes</h1>
       <p style={{ color: "var(--muted)", fontSize: 13, margin: "0 0 20px" }}>
-        Activation codes for the Pinoy Hoops Live streaming app. Each code unlocks one phone. Phones re-check whenever
+        Activation codes for the Pinoy Hoops Live and Pinoy Pickle Live streaming apps. Each code unlocks one phone
+        of one app. Phones re-check whenever
         they&apos;re online (at least every 14 days), so switching a code off or changing its end date reaches the phone
         then — never in the middle of a game.
       </p>
@@ -72,6 +74,14 @@ export default async function AdminStreamCodesPage() {
         <h2 className="section-title" style={{ margin: 0 }}>
           New code
         </h2>
+        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>App</span>
+          <select name="product" defaultValue="hoops" style={inputStyle}>
+            <option value="hoops">Pinoy Hoops Live (basketball) — codes start with PHL</option>
+            <option value="pickle">Pinoy Pickle Live (pickleball) — codes start with PPL</option>
+          </select>
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>A code only unlocks the app it was made for.</span>
+        </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontSize: 13, fontWeight: 600 }}>Label (who it&apos;s for)</span>
           <input type="text" name="label" required placeholder="e.g. Team Tipuno" style={inputStyle} />
@@ -130,6 +140,7 @@ export default async function AdminStreamCodesPage() {
                 </div>
 
                 <div style={{ fontSize: 13, color: "var(--muted)", display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span>App: {l.product === "pickle" ? "Pinoy Pickle Live (pickleball)" : "Pinoy Hoops Live (basketball)"}</span>
                   <span>Valid until: {l.expires_at ? dateOnly.format(new Date(l.expires_at)) : "no end date (lifetime)"}</span>
                   {l.installation_id ? (
                     <>

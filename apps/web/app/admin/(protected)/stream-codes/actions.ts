@@ -7,9 +7,13 @@ import { createSupabaseAdminClient } from "../../../../lib/supabaseAdminClient";
 /** No 0/O, 1/I/L — codes get read out over the phone or typed from a chat message. */
 const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 
-function newCode(): string {
+const PRODUCTS = { hoops: "PHL", pickle: "PPL" } as const;
+type Product = keyof typeof PRODUCTS;
+
+/** "PHL-…" for Pinoy Hoops Live, "PPL-…" for Pinoy Pickle Live, so the app is clear from the code itself. */
+function newCode(product: Product): string {
   const part = () => Array.from({ length: 4 }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join("");
-  return `PHL-${part()}-${part()}`;
+  return `${PRODUCTS[product]}-${part()}-${part()}`;
 }
 
 /** "2026-12-31" → end of that day in Philippine time (UTC+8), or null when blank. */
@@ -18,18 +22,20 @@ function endOfDayPh(date: unknown): string | null {
   return new Date(`${date}T23:59:59+08:00`).toISOString();
 }
 
-/** Creates one or more codes (one per phone) with the same label, league and end date. */
+/** Creates one or more codes (one per phone) for one app, with the same label, league and end date. */
 export async function createStreamCodesAction(formData: FormData) {
   const label = formData.get("label");
   const leagueId = formData.get("leagueId");
   const quantity = Math.round(Number(formData.get("quantity") ?? 1));
+  const product: Product = formData.get("product") === "pickle" ? "pickle" : "hoops";
   if (typeof label !== "string" || label.trim().length === 0) return;
   if (!Number.isFinite(quantity) || quantity < 1 || quantity > 20) return;
 
   const expiresAt = formData.get("noExpiry") === "on" ? null : endOfDayPh(formData.get("expiresOn"));
   const base = label.trim();
   const rows = Array.from({ length: quantity }, (_, i) => ({
-    code: newCode(),
+    code: newCode(product),
+    product,
     label: quantity > 1 ? `${base} – phone ${i + 1}` : base,
     league_id: typeof leagueId === "string" && leagueId.length > 0 ? leagueId : null,
     expires_at: expiresAt,
@@ -39,7 +45,7 @@ export async function createStreamCodesAction(formData: FormData) {
   const { error } = await supabase.from("stream_license").insert(rows);
   if (error) {
     // A duplicate code is astronomically unlikely (31^8 possibilities); retry once with fresh codes.
-    await supabase.from("stream_license").insert(rows.map((r) => ({ ...r, code: newCode() })));
+    await supabase.from("stream_license").insert(rows.map((r) => ({ ...r, code: newCode(product) })));
   }
   revalidatePath("/admin/stream-codes");
 }
