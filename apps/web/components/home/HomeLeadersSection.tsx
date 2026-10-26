@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Player, PlayerSeasonLine } from "@courtstats/shared";
-import { displayPlayerName } from "@courtstats/shared";
+import { displayPlayerName, rankTopPlayers } from "@courtstats/shared";
 import type { LeagueSummary } from "../../lib/leagueSummary";
 import type { SeasonStatsResult } from "../../lib/seasonData";
 import { PlayerAvatar } from "../PlayerAvatar";
@@ -65,6 +65,41 @@ function LeaderCell({
   );
 }
 
+/** A league's ten best players by EFF per game, in two compact columns under its category leaders. */
+function TopTen({ stats, leagueSlug }: { stats: SeasonStatsResult; leagueSlug: string }) {
+  const gamesByTeam = Object.fromEntries(stats.teamStats.map((t) => [t.teamId, t.gamesPlayed]));
+  const ranked = rankTopPlayers(stats.players, gamesByTeam, 10);
+  if (ranked.length === 0) return null;
+
+  return (
+    <div className="home-top">
+      <div className="home-top__head">
+        <span className="home-top__label">Top 10 players</span>
+        <span className="home-top__note">ranked by EFF per game</span>
+        <Link href={`/leagues/${leagueSlug}#top-players`} className="home-top__more">
+          Full list →
+        </Link>
+      </div>
+      <ol className="home-top__list">
+        {ranked.map(({ rank, line }) => {
+          const player = stats.playersById[line.playerId];
+          return (
+            <li className="home-top__item" key={line.playerId}>
+              <span className="home-top__rank">{rank}</span>
+              <Link href={`/players/${line.playerId}`} className="home-top__who">
+                <PlayerAvatar name={player?.full_name ?? "?"} photoUrl={player?.photo_url} size={24} />
+                <span className="home-top__name">{player ? displayPlayerName(player, stats.settings) : "?"}</span>
+              </Link>
+              <span className="home-top__team">{stats.teamsById[line.teamId]?.short_name ?? ""}</span>
+              <span className="home-top__eff">{line.efficiencyPerGame.toFixed(1)}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
 /**
  * Season leaders on the home page: up to three leagues, the one that played
  * most recently first, each with a single leader per category (per-game
@@ -94,6 +129,7 @@ export function HomeLeadersSection({ blocks, hasMoreLeagues }: { blocks: LeagueL
               </div>
 
               {stats && stats.players.length > 0 ? (
+                <>
                 <div className="home-leaders__grid">
                   {CATEGORIES.map(({ label, metric }) => (
                     <LeaderCell
@@ -106,6 +142,8 @@ export function HomeLeadersSection({ blocks, hasMoreLeagues }: { blocks: LeagueL
                     />
                   ))}
                 </div>
+                <TopTen stats={stats} leagueSlug={league.slug} />
+                </>
               ) : (
                 <p className="home-leaders__none">No finalized games yet — leaders will appear once games have been played.</p>
               )}

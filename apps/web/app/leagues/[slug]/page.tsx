@@ -120,7 +120,9 @@ export default async function LeaguePage({ params }: { params: { slug: string } 
 
       {stats && stats.players.length > 0 && (
         <>
-          <h2 className="section-title">Top 10 players</h2>
+          <h2 className="section-title" id="top-players">
+            Top 10 players
+          </h2>
           <TopPlayersTable stats={stats} leagueSlug={league.slug} />
         </>
       )}
