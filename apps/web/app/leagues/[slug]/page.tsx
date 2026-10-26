@@ -8,6 +8,7 @@ import { StandingsTable } from "../../../components/StandingsTable";
 import { SeasonLeadersSection } from "../../../components/home/SeasonLeadersSection";
 import { TeamLogo } from "../../../components/TeamLogo";
 import { LeagueLogos } from "../../../components/LeagueLogos";
+import { TopPlayersTable } from "../../../components/TopPlayersTable";
 import { resolveLeagueSettings } from "@courtstats/shared";
 import { LocalTime } from "../../../components/LocalTime";
 
@@ -115,6 +116,13 @@ export default async function LeaguePage({ params }: { params: { slug: string } 
         <p className="card" style={{ padding: 16, color: "var(--muted)", marginBottom: 28 }}>
           Standings appear once the first game is finalized.
         </p>
+      )}
+
+      {stats && stats.players.length > 0 && (
+        <>
+          <h2 className="section-title">Top 10 players</h2>
+          <TopPlayersTable stats={stats} leagueSlug={league.slug} />
+        </>
       )}
 
       <h2 className="section-title">Teams</h2>

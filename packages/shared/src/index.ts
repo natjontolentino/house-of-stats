@@ -22,3 +22,4 @@ export * from "./logic/gameLeaders";
 export * from "./logic/shotZones";
 
 export * from "./seed/seedData";
+export * from "./logic/topPlayers";
