@@ -1,10 +1,13 @@
 import { createSupabaseClient } from "./supabaseClient";
+import { resolveLeagueSettings } from "@courtstats/shared";
 
 export interface LeagueSummary {
   id: string;
   slug: string;
   name: string;
   logoUrl: string | null;
+  /** Optional second logo from the league's settings. */
+  secondaryLogoUrl: string | null;
   seasonId: string | null;
   seasonName: string;
   seasonStatus: string;
@@ -65,7 +68,7 @@ export async function fetchLeagueSummaries(): Promise<LeagueSummary[]> {
 
   const { data: leagues } = await supabase
     .from("league")
-    .select("id, slug, name, logo_url")
+    .select("id, slug, name, logo_url, settings")
     .eq("status", "active")
     .order("created_at");
   if (!leagues || leagues.length === 0) return [];
@@ -102,6 +105,7 @@ export async function fetchLeagueSummaries(): Promise<LeagueSummary[]> {
       slug: l.slug,
       name: l.name,
       logoUrl: l.logo_url,
+      secondaryLogoUrl: resolveLeagueSettings(l.settings).secondary_logo_url,
       seasonId: season?.id ?? null,
       seasonName: season?.name ?? "",
       seasonStatus: season?.status ?? "",

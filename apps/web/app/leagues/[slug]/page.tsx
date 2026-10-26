@@ -7,6 +7,8 @@ import { selectLeagueAction } from "../../admin/(protected)/leagueSwitchActions"
 import { StandingsTable } from "../../../components/StandingsTable";
 import { SeasonLeadersSection } from "../../../components/home/SeasonLeadersSection";
 import { TeamLogo } from "../../../components/TeamLogo";
+import { LeagueLogos } from "../../../components/LeagueLogos";
+import { resolveLeagueSettings } from "@courtstats/shared";
 import { LocalTime } from "../../../components/LocalTime";
 
 export const dynamic = "force-dynamic";
@@ -29,10 +31,7 @@ export default async function LeaguePage({ params }: { params: { slug: string } 
     <>
     <main className="page">
       <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "4px 0 24px" }}>
-        {league.logo_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={league.logo_url} alt="" style={{ width: 64, height: 64, objectFit: "contain" }} />
-        )}
+        <LeagueLogos primary={league.logo_url} secondary={resolveLeagueSettings(league.settings).secondary_logo_url} size={64} gap={12} />
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: 26, margin: 0 }}>{league.name}</h1>
           <p style={{ color: "var(--muted)", margin: "4px 0 0", fontSize: 14 }}>

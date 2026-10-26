@@ -19,6 +19,7 @@ export async function updateLeagueAction(formData: FormData) {
 
   const supabase = createSupabaseAdminClient();
   const update: Record<string, unknown> = { name: name.trim() };
+  const { data: current } = await supabase.from("league").select("settings").eq("id", leagueId).single();
 
   const logo = formData.get("logo");
   if (logo instanceof File && logo.size > 0) {
@@ -32,9 +33,37 @@ export async function updateLeagueAction(formData: FormData) {
     }
   }
 
+  // The optional second logo is kept in league.settings (merged, so every other setting is left alone).
+  const settings = { ...((current?.settings as Record<string, unknown> | null) ?? {}) };
+  const previousSecondary = typeof settings.secondary_logo_url === "string" ? settings.secondary_logo_url : null;
+  const logo2 = formData.get("logo2");
+  let secondaryChanged = false;
+  if (logo2 instanceof File && logo2.size > 0) {
+    const path = `league-logos/${leagueId}-2-${Date.now()}.${extFromFile(logo2)}`;
+    const { error: uploadError } = await supabase.storage
+      .from("league-assets")
+      .upload(path, logo2, { contentType: logo2.type, upsert: true });
+    if (!uploadError) {
+      settings.secondary_logo_url = supabase.storage.from("league-assets").getPublicUrl(path).data.publicUrl;
+      secondaryChanged = true;
+    }
+  } else if (formData.get("removeLogo2") === "on" && previousSecondary) {
+    settings.secondary_logo_url = null;
+    secondaryChanged = true;
+  }
+  if (secondaryChanged) update.settings = settings;
+
   await supabase.from("league").update(update).eq("id", leagueId);
+
+  // The replaced or removed second-logo file is no longer referenced; clear it (best effort).
+  if (secondaryChanged && previousSecondary) {
+    const marker = "/league-assets/";
+    const at = previousSecondary.indexOf(marker);
+    if (at !== -1) await supabase.storage.from("league-assets").remove([previousSecondary.slice(at + marker.length)]);
+  }
+
   revalidatePath("/admin/league");
-  revalidatePath("/");
+  revalidatePath("/", "layout");
 }
 
 const CLOCK_MODES = ["off", "tracker", "companion"] as const;

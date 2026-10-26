@@ -59,6 +59,24 @@ export default async function AdminLeaguePage({
           <span style={{ fontSize: 12, color: "var(--muted)" }}>Leave blank to keep the current logo.</span>
         </label>
 
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>Second logo (optional)</span>
+          {settings.secondary_logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={settings.secondary_logo_url} alt="Current second logo" style={{ width: 64, height: 64, objectFit: "contain", marginBottom: 4 }} />
+          )}
+          <input type="file" name="logo2" aria-label="Second logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" />
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>
+            Shown beside the main logo, for example a co-organizer or sponsor. Leave blank to keep the current one.
+          </span>
+          {settings.secondary_logo_url && (
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+              <input type="checkbox" name="removeLogo2" id="removeLogo2" />
+              <label htmlFor="removeLogo2">Remove the second logo</label>
+            </span>
+          )}
+        </div>
+
         <button type="submit" className="button-primary" style={{ alignSelf: "flex-start" }}>
           Save
         </button>

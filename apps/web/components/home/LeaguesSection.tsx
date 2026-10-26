@@ -33,9 +33,16 @@ export function LeaguesSection({ leagues }: { leagues: LeagueSummary[] }) {
             const status = statusLabel(l.seasonStatus);
             return (
               <Link href={`/leagues/${l.slug}`} className="league-card" key={l.id}>
-                {l.logoUrl ? (
+                {l.logoUrl && l.secondaryLogoUrl ? (
+                  <span className="league-card__pair">
+                    {[l.logoUrl, l.secondaryLogoUrl].map((url) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={url} src={url} alt="" className="league-card__badge league-card__badge--pair" style={{ objectFit: "contain" }} />
+                    ))}
+                  </span>
+                ) : l.logoUrl || l.secondaryLogoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={l.logoUrl} alt="" className="league-card__badge" style={{ objectFit: "contain" }} />
+                  <img src={(l.logoUrl ?? l.secondaryLogoUrl) as string} alt="" className="league-card__badge" style={{ objectFit: "contain" }} />
                 ) : (
                   <div className="league-card__badge">{initials(l.name)}</div>
                 )}

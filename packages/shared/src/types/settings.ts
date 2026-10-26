@@ -26,6 +26,8 @@ export interface LeagueSettings {
   minimum_attempts_for_percentage_leaderboards: "scaled" | number;
   hide_full_names_and_photos_of_minors: boolean;
   standings_tiebreakers: Array<"head_to_head" | "point_differential">;
+  /** Optional second league logo (a co-organizer or sponsor), shown beside the main one. Lives here rather than in its own column so it needs no database change. */
+  secondary_logo_url: string | null;
 }
 
 export const DEFAULT_LEAGUE_SETTINGS: LeagueSettings = {
@@ -48,6 +50,7 @@ export const DEFAULT_LEAGUE_SETTINGS: LeagueSettings = {
   minimum_attempts_for_percentage_leaderboards: "scaled",
   hide_full_names_and_photos_of_minors: false,
   standings_tiebreakers: ["head_to_head", "point_differential"],
+  secondary_logo_url: null,
 };
 
 export function resolveLeagueSettings(

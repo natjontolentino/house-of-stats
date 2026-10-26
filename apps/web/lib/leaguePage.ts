@@ -7,7 +7,7 @@ export async function fetchLeagueBySlug(slug: string) {
 
   const { data: league } = await supabase
     .from("league")
-    .select("id, name, slug, logo_url, status")
+    .select("id, name, slug, logo_url, settings, status")
     .eq("slug", slug)
     .neq("status", "archived")
     .maybeSingle();

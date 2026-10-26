@@ -257,7 +257,7 @@ export function renderGraphicHtml(bundle: GameBundle, liveState: LiveGameState):
   <body>
     <div style="width:1080px;height:1080px;background:linear-gradient(135deg,#1a1a2e,#16213e);color:white;display:flex;flex-direction:column;padding:48px 60px;box-sizing:border-box">
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;height:64px">
-        ${logoImg(bundle.league.logo_url, 64)}
+        ${logoImg(bundle.league.logo_url, 64)}${logoImg(bundle.settings.secondary_logo_url, 64)}
         <div style="font-size:34px;font-weight:800">${esc(bundle.league.name)}</div>
       </div>
       <div style="text-align:center;font-size:24px;letter-spacing:3px;text-transform:uppercase;opacity:0.7;margin:10px 0 18px">${esc(statusLabel)}</div>

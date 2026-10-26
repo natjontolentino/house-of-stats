@@ -137,6 +137,7 @@ export function LiveScoreboard({ bundle, initialView }: { bundle: GameBundle; in
         </Link>
         <div className="live-league">
           <TeamLogoMark url={bundle.league.logo_url} size={22} />
+          <TeamLogoMark url={bundle.settings.secondary_logo_url} size={22} />
           <span>{bundle.league.name}</span>
         </div>
         <div className={`live-badge live-badge--${phase}`} aria-live="polite">

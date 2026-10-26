@@ -482,6 +482,17 @@ tbody tr:hover {
   font-size: 16px;
 }
 
+/* A league with two logos shows them side by side, a little smaller so the card stays the same width. */
+.league-card__pair {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+.league-card__badge--pair {
+  width: 44px;
+  height: 44px;
+}
+
 .league-card__body {
   min-width: 0;
 }
