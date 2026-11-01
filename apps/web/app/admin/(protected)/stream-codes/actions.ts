@@ -8,12 +8,12 @@ import { STREAM_FEATURE_KEYS } from "./features";
 /** No 0/O, 1/I/L — codes get read out over the phone or typed from a chat message. */
 const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 
-const PRODUCTS = { hoops: "PHL", pickle: "PPL", hoops_adv: "PHA" } as const;
+const PRODUCTS = { hoops: "PHL", pickle: "PPL", hoops_adv: "PHA", hoops_vert: "PHV" } as const;
 type Product = keyof typeof PRODUCTS;
 
 /**
  * "PHL-…" for Pinoy Hoops Live, "PPL-…" for Pinoy Pickle Live, "PHA-…" for Pinoy Hoops Live Stream Advanced
- * (multi-camera), so the app is clear from the code itself.
+ * (multi-camera), "PHV-…" for Pinoy Hoops Live Vertical (9:16 portrait), so the app is clear from the code itself.
  */
 function newCode(product: Product): string {
   const part = () => Array.from({ length: 4 }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join("");
@@ -38,7 +38,7 @@ export async function createStreamCodesAction(formData: FormData) {
   const leagueId = formData.get("leagueId");
   const quantity = Math.round(Number(formData.get("quantity") ?? 1));
   const chosen = formData.get("product");
-  const product: Product = chosen === "pickle" || chosen === "hoops_adv" ? chosen : "hoops";
+  const product: Product = chosen === "pickle" || chosen === "hoops_adv" || chosen === "hoops_vert" ? chosen : "hoops";
   // Blank = the app's usual: 3 for Advanced (1 main + 2 camera phones), 1 for the single-camera apps.
   const devices = maxDevices(formData.get("maxDevices") || null) ?? (product === "hoops_adv" ? 3 : 1);
   if (typeof label !== "string" || label.trim().length === 0) return;

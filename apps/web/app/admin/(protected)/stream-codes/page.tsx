@@ -25,7 +25,7 @@ interface StreamLicense {
   id: string;
   code: string;
   label: string;
-  product: "hoops" | "pickle" | "hoops_adv";
+  product: "hoops" | "pickle" | "hoops_adv" | "hoops_vert";
   league_id: string | null;
   expires_at: string | null;
   status: "active" | "revoked";
@@ -76,7 +76,7 @@ export default async function AdminStreamCodesPage() {
     <main className="page" style={{ maxWidth: 760 }}>
       <h1 style={{ fontSize: 22, margin: "4px 0 4px" }}>Stream codes</h1>
       <p style={{ color: "var(--muted)", fontSize: 13, margin: "0 0 20px" }}>
-        Activation codes for the Pinoy Hoops Live, Pinoy Hoops Live Stream Advanced and Pinoy Pickle Live streaming
+        Activation codes for the Pinoy Hoops Live, Pinoy Hoops Live Stream Advanced, Pinoy Hoops Live Vertical and Pinoy Pickle Live streaming
         apps. A code unlocks one app: 1 phone for the single-camera apps, 3 for Advanced (1 main phone + 2 camera
         phones). Raise the limit for spare phones, or remove a phone that&apos;s no longer used to free its place.
         Phones re-check whenever
@@ -97,6 +97,7 @@ export default async function AdminStreamCodesPage() {
           <select name="product" defaultValue="hoops" style={inputStyle}>
             <option value="hoops">Pinoy Hoops Live (basketball) — codes start with PHL</option>
             <option value="hoops_adv">Pinoy Hoops Live Stream Advanced (basketball, multi-camera) — codes start with PHA</option>
+            <option value="hoops_vert">Pinoy Hoops Live Vertical (basketball, 9:16 portrait) — codes start with PHV</option>
             <option value="pickle">Pinoy Pickle Live (pickleball) — codes start with PPL</option>
           </select>
           <span style={{ fontSize: 12, color: "var(--muted)" }}>A code only unlocks the app it was made for.</span>
@@ -171,7 +172,9 @@ export default async function AdminStreamCodesPage() {
                       ? "Pinoy Pickle Live (pickleball)"
                       : l.product === "hoops_adv"
                         ? "Pinoy Hoops Live Stream Advanced (multi-camera)"
-                        : "Pinoy Hoops Live (basketball)"}
+                        : l.product === "hoops_vert"
+                          ? "Pinoy Hoops Live Vertical (9:16 portrait)"
+                          : "Pinoy Hoops Live (basketball)"}
                   </span>
                   <span>Valid until: {l.expires_at ? dateOnly.format(new Date(l.expires_at)) : "no end date (lifetime)"}</span>
                   <span>
