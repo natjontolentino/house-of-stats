@@ -9,8 +9,10 @@ import {
   removeStreamDeviceAction,
   setMaxDevicesAction,
   setStreamExpiryAction,
+  setStreamFeaturesAction,
   deleteStreamCodeAction,
 } from "./actions";
+import { STREAM_FEATURES } from "./features";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +30,7 @@ interface StreamLicense {
   expires_at: string | null;
   status: "active" | "revoked";
   max_devices: number;
+  features: string[] | null;
   created_at: string;
 }
 
@@ -235,6 +238,21 @@ export default async function AdminStreamCodesPage() {
                   />
                   <button type="submit" className="button-secondary" style={smallButton}>
                     Save
+                  </button>
+                </form>
+
+                {/* Special features: extras only this code's league gets. */}
+                <form action={setStreamFeaturesAction} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <input type="hidden" name="id" value={l.id} />
+                  <span style={{ fontSize: 13 }}>Special features</span>
+                  {STREAM_FEATURES.map((f) => (
+                    <label key={f.key} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
+                      <input type="checkbox" name="features" value={f.key} defaultChecked={(l.features ?? []).includes(f.key)} />
+                      {f.label}
+                    </label>
+                  ))}
+                  <button type="submit" className="button-secondary" style={smallButton}>
+                    Save features
                   </button>
                 </form>
 

@@ -3,6 +3,7 @@
 import { randomInt } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "../../../../lib/supabaseAdminClient";
+import { STREAM_FEATURE_KEYS } from "./features";
 
 /** No 0/O, 1/I/L — codes get read out over the phone or typed from a chat message. */
 const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
@@ -92,6 +93,18 @@ export async function setMaxDevicesAction(formData: FormData) {
   if (typeof id !== "string" || devices === null) return;
   const supabase = createSupabaseAdminClient();
   await supabase.from("stream_license").update({ max_devices: devices }).eq("id", id);
+  revalidatePath("/admin/stream-codes");
+}
+
+/** Which special features this code has switched on (ticked boxes). Reaches the phones at their next check. */
+export async function setStreamFeaturesAction(formData: FormData) {
+  const id = formData.get("id");
+  if (typeof id !== "string") return;
+  const features = formData
+    .getAll("features")
+    .filter((f): f is string => typeof f === "string" && STREAM_FEATURE_KEYS.includes(f));
+  const supabase = createSupabaseAdminClient();
+  await supabase.from("stream_license").update({ features }).eq("id", id);
   revalidatePath("/admin/stream-codes");
 }
 
